@@ -1,0 +1,28 @@
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  line-height: 1.5;
+  color: #111;
+  background: #fff;
+}
+.container { max-width: 960px; margin: 0 auto; padding: 1.25rem; }
+
+.site-header { border-bottom: 1px solid #eee; background: #fafafa; }
+.site-header .container { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.brand { font-weight: 700; text-decoration: none; color: inherit; }
+.nav a { margin-left: 1rem; text-decoration: none; color: inherit; opacity: 0.8; }
+.nav a:hover { opacity: 1; }
+
+.hero { padding: 3rem 0 2rem; }
+.hero h1 { font-size: 2.2rem; margin: 0 0 0.75rem; }
+.hero p { margin: 0 0 1.25rem; max-width: 60ch; }
+.cta { display: inline-block; padding: 0.7rem 1rem; border-radius: 10px; background: #111; color: #fff; text-decoration: none; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 2rem; }
+.card { border: 1px solid #eee; border-radius: 14px; padding: 1rem; background: #fff; }
+.card h3 { margin: 0 0 0.5rem; }
+.card p { margin: 0; opacity: 0.85; }
+
+.site-footer { border-top: 1px solid #eee; margin-top: 3rem; padding: 1.5rem 0; background: #fafafa; }
