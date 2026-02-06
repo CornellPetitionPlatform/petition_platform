@@ -48,7 +48,7 @@ incremental         : false
 detach              : false
 port                : 4000
 host                : 127.0.0.1
-baseurl             : "" 
+baseurl             : ""
 url                 : ""
 show_dir_listing    : false
 
