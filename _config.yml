@@ -14,8 +14,9 @@ includes_dir        : _includes
 sass:
   sass_dir: _sass
 collections:
-  posts:
-    output          : true
+  petitions:
+    output: true
+    permalink: /petitions/:name/
 
 # Handling Reading
 safe                : false
@@ -81,3 +82,8 @@ defaults:
       path: ""
     values:
       layout: default
+  - scope:
+      path: "_petitions"
+      type: petitions
+    values:
+      layout: petition
