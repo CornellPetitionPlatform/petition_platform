@@ -1,6 +1,6 @@
-name                : "Cornell STech Lab Petition Platform"
-author              : "Cornell STech Lab"
-title               : "Cornell STech Lab Petition Platform"
+name                : "CornellPetitionPlatform Petition Platform"
+author              : "CornellPetitionPlatform"
+title               : "CornellPetitionPlatform Petition Platform"
 description         : "Repository of anonymous petitions created as part of a Change.org petition study."
 
 # Where things are
@@ -48,7 +48,7 @@ incremental         : false
 detach              : false
 port                : 4000
 host                : 127.0.0.1
-url                 : "https://cornellpetitionresearch.github.io"
+url                 : "https://cornellpetitionplatform.github.io"
 baseurl             : "/petition_platform"
 show_dir_listing    : false
 
