@@ -3,8 +3,72 @@ layout: default
 ---
 <article class="card">
   <h1>{{ page.title }}</h1>
+  <div class="petition-actions">
+    <button id="copy-link-btn" class="action-btn" type="button">
+      <svg class="action-icon-link" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M10.59 13.41a1 1 0 0 1 0-1.41l2.41-2.41a3 3 0 1 1 4.24 4.24l-2.12 2.12a3 3 0 0 1-4.24 0 1 1 0 1 1 1.41-1.41 1 1 0 0 0 1.41 0l2.12-2.12a1 1 0 1 0-1.41-1.41l-2.41 2.41a1 1 0 0 1-1.41 0Z"></path>
+        <path d="M13.41 10.59a1 1 0 0 1 0 1.41l-2.41 2.41a3 3 0 0 1-4.24-4.24l2.12-2.12a3 3 0 0 1 4.24 0 1 1 0 0 1-1.41 1.41 1 1 0 0 0-1.41 0L8.18 11.6a1 1 0 1 0 1.41 1.41l2.41-2.41a1 1 0 0 1 1.41 0Z"></path>
+      </svg>
+      <span>Copy Link</span>
+    </button>
+    <button id="like-btn" class="action-btn" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M9 21H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h4v11Zm11-10a2 2 0 0 1 2.01 1.97v.17l-1 6a2 2 0 0 1-1.97 1.66H11V10.5l3.2-6.4A1.5 1.5 0 0 1 15.54 3 1.46 1.46 0 0 1 17 4.46V9h3Z"></path>
+      </svg>
+      <span>Like petition</span>
+    </button>
+    <span id="action-status" class="action-status" aria-live="polite"></span>
+  </div>
   <div class="prose">
     {{ content }}
   </div>
 </article>
 
+<script>
+  (function () {
+    const slug = "{{ page.slug | default: page.title | slugify }}";
+    const title = {{ page.title | jsonify }};
+    const copyBtn = document.getElementById("copy-link-btn");
+    const likeBtn = document.getElementById("like-btn");
+    const status = document.getElementById("action-status");
+
+    function track(eventName, extra) {
+      if (typeof window.gtag !== "function") return;
+      window.gtag("event", eventName, Object.assign({
+        petition_slug: slug,
+        petition_title: title,
+        page_path: window.location.pathname
+      }, extra || {}));
+    }
+
+    function markClicked(button, label) {
+      if (!button) return;
+      button.disabled = true;
+      button.classList.add("is-clicked");
+      const labelNode = button.querySelector("span");
+      if (labelNode && label) labelNode.textContent = label;
+    }
+
+    if (copyBtn) {
+      copyBtn.addEventListener("click", async function () {
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          markClicked(copyBtn, "Link copied");
+          if (status) status.textContent = "Link copied";
+          track("petition_copy_link");
+        } catch (err) {
+          if (status) status.textContent = "Copy failed";
+          track("petition_copy_link_failed");
+        }
+      });
+    }
+
+    if (likeBtn) {
+      likeBtn.addEventListener("click", function () {
+        markClicked(likeBtn, "Liked petition");
+        if (status) status.textContent = "Thanks for your feedback";
+        track("petition_like_clicked");
+      });
+    }
+  })();
+</script>
