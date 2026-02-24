@@ -130,9 +130,10 @@ body {
 }
 
 .share-option {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
   gap: 0.6rem;
   padding: 0.82rem 1rem;
   border: 1px solid #a8a1b6;
