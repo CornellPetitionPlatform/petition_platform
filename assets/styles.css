@@ -134,6 +134,8 @@ body {
   align-items: center;
   justify-content: center;
   width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
   gap: 0.6rem;
   padding: 0.82rem 1rem;
   border: 1px solid #a8a1b6;
@@ -143,9 +145,14 @@ body {
   font-size: 1.04rem;
   font-weight: 700;
   text-decoration: none;
+  line-height: 1.2;
   text-align: center;
   cursor: pointer;
   font-family: inherit;
+}
+
+a.share-option:visited {
+  color: #3d3948;
 }
 
 .share-option:hover {
