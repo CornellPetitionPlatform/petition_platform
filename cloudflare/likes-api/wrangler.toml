@@ -1,0 +1,13 @@
+name = "petition-likes-api"
+main = "src/index.js"
+compatibility_date = "2026-02-24"
+
+[[d1_databases]]
+binding = "LIKES_DB"
+database_name = "petition-likes"
+database_id = "83dab01b-7dd3-4f3d-b781-ace3b993613d"
+
+[vars]
+ALLOWED_ORIGIN = "https://cornellpetitionplatform.github.io,http://127.0.0.1:4000,http://localhost:4000"
+RATE_LIMIT_WINDOW_SECONDS = "600"
+RATE_LIMIT_MAX_REQUESTS = "20"
