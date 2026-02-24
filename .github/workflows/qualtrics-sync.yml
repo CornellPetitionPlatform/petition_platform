@@ -1,0 +1,46 @@
+name: Sync petitions from Qualtrics
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync petition files
+        env:
+          QUALTRICS_BASE_URL: ${{ secrets.QUALTRICS_BASE_URL }}
+          QUALTRICS_API_TOKEN: ${{ secrets.QUALTRICS_API_TOKEN }}
+          QUALTRICS_SURVEY_ID: ${{ secrets.QUALTRICS_SURVEY_ID }}
+          QUALTRICS_TITLE_COLUMN: ${{ secrets.QUALTRICS_TITLE_COLUMN }}
+          QUALTRICS_BODY_COLUMN: ${{ secrets.QUALTRICS_BODY_COLUMN }}
+          QUALTRICS_RESPONSE_ID_COLUMN: ${{ secrets.QUALTRICS_RESPONSE_ID_COLUMN }}
+          QUALTRICS_PUBLISHED_COLUMN: ${{ secrets.QUALTRICS_PUBLISHED_COLUMN }}
+          QUALTRICS_PUBLISHED_VALUE: ${{ secrets.QUALTRICS_PUBLISHED_VALUE }}
+          QUALTRICS_RECORDED_DATE_COLUMN: ${{ secrets.QUALTRICS_RECORDED_DATE_COLUMN }}
+        run: python scripts/sync_qualtrics_petitions.py
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _petitions
+          if git diff --cached --quiet; then
+            echo "No petition changes to commit."
+            exit 0
+          fi
+          git commit -m "Sync petitions from Qualtrics"
+          git push
