@@ -4,24 +4,71 @@ layout: default
 <article class="card">
   <h1>{{ page.title }}</h1>
   <div class="petition-actions">
-    <button id="copy-link-btn" class="action-btn" type="button">
-      <svg class="action-icon-link" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M10.59 13.41a1 1 0 0 1 0-1.41l2.41-2.41a3 3 0 1 1 4.24 4.24l-2.12 2.12a3 3 0 0 1-4.24 0 1 1 0 1 1 1.41-1.41 1 1 0 0 0 1.41 0l2.12-2.12a1 1 0 1 0-1.41-1.41l-2.41 2.41a1 1 0 0 1-1.41 0Z"></path>
-        <path d="M13.41 10.59a1 1 0 0 1 0 1.41l-2.41 2.41a3 3 0 0 1-4.24-4.24l2.12-2.12a3 3 0 0 1 4.24 0 1 1 0 0 1-1.41 1.41 1 1 0 0 0-1.41 0L8.18 11.6a1 1 0 1 0 1.41 1.41l2.41-2.41a1 1 0 0 1 1.41 0Z"></path>
-      </svg>
-      <span>Copy Link</span>
-    </button>
-    <button id="like-btn" class="action-btn" type="button">
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M9 21H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h4v11Zm11-10a2 2 0 0 1 2.01 1.97v.17l-1 6a2 2 0 0 1-1.97 1.66H11V10.5l3.2-6.4A1.5 1.5 0 0 1 15.54 3 1.46 1.46 0 0 1 17 4.46V9h3Z"></path>
-      </svg>
-      <span>Like petition</span>
-    </button>
+    <div class="like-row">
+      <button id="like-btn" class="action-btn" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M9 21H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h4v11Zm11-10a2 2 0 0 1 2.01 1.97v.17l-1 6a2 2 0 0 1-1.97 1.66H11V10.5l3.2-6.4A1.5 1.5 0 0 1 15.54 3 1.46 1.46 0 0 1 17 4.46V9h3Z"></path>
+        </svg>
+        <span>Like petition</span>
+      </button>
+      <p class="like-meta">Likes: <strong id="like-count">-</strong></p>
+    </div>
+
     <span id="action-status" class="action-status" aria-live="polite"></span>
   </div>
   <div class="prose">
     {{ content }}
   </div>
+
+  <section class="share-panel" aria-label="Share this petition">
+    <h2 class="share-panel__title">Share this petition</h2>
+    <div class="share-panel__content">
+      <div class="share-panel__options">
+        <button id="copy-link-btn" class="share-option" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M10.59 13.41a1 1 0 0 1 0-1.41l2.41-2.41a3 3 0 1 1 4.24 4.24l-2.12 2.12a3 3 0 0 1-4.24 0 1 1 0 1 1 1.41-1.41 1 1 0 0 0 1.41 0l2.12-2.12a1 1 0 1 0-1.41-1.41l-2.41 2.41a1 1 0 0 1-1.41 0Z"></path>
+            <path d="M13.41 10.59a1 1 0 0 1 0 1.41l-2.41 2.41a3 3 0 0 1-4.24-4.24l2.12-2.12a3 3 0 0 1 4.24 0 1 1 0 0 1-1.41 1.41 1 1 0 0 0-1.41 0L8.18 11.6a1 1 0 1 0 1.41 1.41l2.41-2.41a1 1 0 0 1 1.41 0Z"></path>
+          </svg>
+          <span>Copy link</span>
+        </button>
+
+        <a id="share-whatsapp" class="share-option" href="#" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 3a9 9 0 0 0-7.7 13.67L3 21l4.45-1.27A9 9 0 1 0 12 3Zm0 16a7 7 0 0 1-3.64-1.02l-.26-.15-2.64.75.77-2.57-.17-.27A7 7 0 1 1 12 19Zm3.92-5.22c-.22-.11-1.31-.64-1.51-.72-.2-.07-.34-.11-.48.11-.15.22-.56.72-.7.87-.13.15-.25.17-.47.06-.22-.11-.92-.34-1.75-1.07-.65-.58-1.09-1.29-1.22-1.51-.13-.22-.01-.34.1-.45.1-.1.22-.25.33-.38.11-.13.15-.22.22-.36.07-.15.04-.27-.02-.38-.06-.11-.48-1.16-.66-1.58-.17-.41-.34-.35-.48-.35h-.41c-.15 0-.38.06-.58.28-.2.22-.76.74-.76 1.81 0 1.07.78 2.1.89 2.24.11.15 1.52 2.31 3.68 3.24.51.22.91.35 1.22.45.51.16.98.14 1.35.09.41-.06 1.31-.54 1.49-1.07.19-.53.19-.98.13-1.07-.05-.08-.2-.13-.42-.24Z"></path>
+          </svg>
+          <span>Send via WhatsApp</span>
+        </a>
+
+        <a id="share-facebook" class="share-option" href="#" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M13.5 22v-8h2.6l.4-3h-3V9.1c0-.87.24-1.46 1.5-1.46H16.7V5a22.7 22.7 0 0 0-2.5-.13c-2.47 0-4.16 1.5-4.16 4.28V11H7.3v3h2.74v8h3.46Z"></path>
+          </svg>
+          <span>Share on Facebook</span>
+        </a>
+
+        <button id="share-nextdoor" class="share-option" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 3.5a5.5 5.5 0 0 0-5.5 5.5v5.75a1.75 1.75 0 0 0 1.75 1.75H10V11a2 2 0 1 1 4 0v5.5h1.75a1.75 1.75 0 0 0 1.75-1.75V9A5.5 5.5 0 0 0 12 3.5Zm-3.5 6A3.5 3.5 0 0 1 12 6a3.5 3.5 0 0 1 3.5 3.5v5h-1v-3.5a2.5 2.5 0 0 0-5 0v3.5h-1V9.5Z"></path>
+          </svg>
+          <span>Nextdoor</span>
+        </button>
+
+        <a id="share-email" class="share-option" href="#">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-11Zm1.5-.5L12 11.25 19.5 6H4.5Zm15 12v-9.7l-7.07 4.95a.75.75 0 0 1-.86 0L4.5 8.3V18h15Z"></path>
+          </svg>
+          <span>Send via email</span>
+        </a>
+
+        <a id="share-x" class="share-option" href="#" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M18.9 3H22l-6.78 7.76L23 21h-6.1l-4.77-6.25L6.64 21H3.5l7.25-8.29L3 3h6.25l4.31 5.67L18.9 3Zm-1.07 16.2h1.69L8.34 4.72H6.52L17.83 19.2Z"></path>
+          </svg>
+          <span>Post on X</span>
+        </a>
+      </div>
+    </div>
+  </section>
 </article>
 
 <script>
@@ -29,8 +76,18 @@ layout: default
     const slug = "{{ page.slug | default: page.title | slugify }}";
     const title = {{ page.title | jsonify }};
     const copyBtn = document.getElementById("copy-link-btn");
+    const whatsappLink = document.getElementById("share-whatsapp");
+    const facebookLink = document.getElementById("share-facebook");
+    const nextdoorBtn = document.getElementById("share-nextdoor");
+    const emailLink = document.getElementById("share-email");
+    const xLink = document.getElementById("share-x");
     const likeBtn = document.getElementById("like-btn");
+    const likeCount = document.getElementById("like-count");
     const status = document.getElementById("action-status");
+    const configuredLikesApiBase = {{ site.likes_api_url | default: "" | jsonify }};
+    const isLocalHost = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+    const likesApiBase = configuredLikesApiBase || (isLocalHost ? "http://127.0.0.1:8787" : "");
+    const clientIdStorageKey = "petition_platform_client_id_v1";
 
     function track(eventName, extra) {
       if (typeof window.gtag !== "function") return;
@@ -49,11 +106,122 @@ layout: default
       if (labelNode && label) labelNode.textContent = label;
     }
 
+    function setLinkIfPresent(node, href) {
+      if (!node) return;
+      node.setAttribute("href", href);
+    }
+
+    function initializeShareOptions() {
+      const url = window.location.href;
+      const encodedUrl = encodeURIComponent(url);
+      const shareText = title + " " + url;
+      const encodedShareText = encodeURIComponent(shareText);
+
+      setLinkIfPresent(whatsappLink, "https://wa.me/?text=" + encodedShareText);
+      setLinkIfPresent(facebookLink, "https://www.facebook.com/sharer/sharer.php?u=" + encodedUrl);
+      setLinkIfPresent(xLink, "https://twitter.com/intent/tweet?text=" + encodeURIComponent(title) + "&url=" + encodedUrl);
+      setLinkIfPresent(emailLink, "mailto:?subject=" + encodeURIComponent(title) + "&body=" + encodeURIComponent("I thought you might be interested in this petition:\n\n" + url));
+    }
+
+    function setLikeCount(count) {
+      if (!likeCount) return;
+      likeCount.textContent = Number.isFinite(count) ? String(count) : "-";
+    }
+
+    function parseLikeCount(value) {
+      const count = Number(value);
+      if (!Number.isFinite(count) || count < 0) return null;
+      return Math.trunc(count);
+    }
+
+    function buildLikesUrl() {
+      if (!likesApiBase) return null;
+      return likesApiBase.replace(/\/$/, "") + "/likes/" + encodeURIComponent(slug);
+    }
+
+    function isValidClientId(value) {
+      return /^[A-Za-z0-9_-]{16,128}$/.test(value);
+    }
+
+    function createClientId() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+      }
+      return "cid_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+
+    function getOrCreateClientId() {
+      try {
+        const existing = window.localStorage.getItem(clientIdStorageKey);
+        if (existing && isValidClientId(existing)) return existing;
+
+        const created = createClientId();
+        if (!isValidClientId(created)) return null;
+        window.localStorage.setItem(clientIdStorageKey, created);
+        return created;
+      } catch (err) {
+        return null;
+      }
+    }
+
+    async function loadLikeCount() {
+      const url = buildLikesUrl();
+      if (!url) return;
+
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: { "Accept": "application/json" }
+        });
+        if (!response.ok) throw new Error("Like count request failed");
+
+        const data = await response.json();
+        const count = parseLikeCount(data.likes);
+        if (!Number.isFinite(count)) throw new Error("Invalid like response");
+        setLikeCount(count);
+      } catch (err) {
+        setLikeCount(null);
+        track("petition_like_count_load_failed");
+      }
+    }
+
+    async function incrementLikeCount() {
+      const url = buildLikesUrl();
+      if (!url) throw new Error("Likes API not configured");
+      const clientId = getOrCreateClientId();
+      if (!clientId) throw new Error("client_id_unavailable");
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-Client-Id": clientId
+        }
+      });
+
+      const data = await response.json().catch(function () { return {}; });
+      if (response.status === 429) {
+        const rateLimitError = new Error("rate_limited");
+        rateLimitError.payload = data;
+        throw rateLimitError;
+      }
+      if (!response.ok) {
+        const message = data && (data.detail || data.error)
+          ? String(data.detail || data.error)
+          : "Like increment failed";
+        throw new Error(message);
+      }
+      const count = parseLikeCount(data.likes);
+      if (!Number.isFinite(count)) throw new Error("Invalid like response");
+      setLikeCount(count);
+      return { liked: data.liked !== false };
+    }
+
     if (copyBtn) {
       copyBtn.addEventListener("click", async function () {
         try {
           await navigator.clipboard.writeText(window.location.href);
-          markClicked(copyBtn, "Link copied");
           if (status) status.textContent = "Link copied";
           track("petition_copy_link");
         } catch (err) {
@@ -63,12 +231,85 @@ layout: default
       });
     }
 
-    if (likeBtn) {
-      likeBtn.addEventListener("click", function () {
-        markClicked(likeBtn, "Liked petition");
-        if (status) status.textContent = "Thanks for your feedback";
-        track("petition_like_clicked");
+    if (nextdoorBtn) {
+      nextdoorBtn.addEventListener("click", function () {
+        window.open("https://nextdoor.com/", "_blank", "noopener");
+        navigator.clipboard.writeText(window.location.href).then(function () {
+          if (status) status.textContent = "Link copied. Continue sharing on Nextdoor.";
+          track("petition_share_nextdoor");
+        }).catch(function () {
+          if (status) status.textContent = "Opened Nextdoor. Copy link manually if needed.";
+          track("petition_share_nextdoor_failed");
+        });
       });
     }
+
+    if (whatsappLink) {
+      whatsappLink.addEventListener("click", function () {
+        track("petition_share_whatsapp");
+      });
+    }
+
+    if (facebookLink) {
+      facebookLink.addEventListener("click", function () {
+        track("petition_share_facebook");
+      });
+    }
+
+    if (emailLink) {
+      emailLink.addEventListener("click", function () {
+        track("petition_share_email");
+      });
+    }
+
+    if (xLink) {
+      xLink.addEventListener("click", function () {
+        track("petition_share_x");
+      });
+    }
+
+    if (likeBtn) {
+      if (!likesApiBase) {
+        likeBtn.disabled = true;
+        if (status) status.textContent = "Likes are not configured yet";
+      }
+
+      likeBtn.addEventListener("click", async function () {
+        likeBtn.disabled = true;
+
+        try {
+          const result = await incrementLikeCount();
+          if (result.liked) {
+            markClicked(likeBtn, "Liked petition");
+            if (status) status.textContent = "Thanks for your feedback";
+            track("petition_like_clicked");
+          } else {
+            markClicked(likeBtn, "Already liked");
+            if (status) status.textContent = "You already liked this petition";
+            track("petition_like_duplicate");
+          }
+        } catch (err) {
+          likeBtn.disabled = false;
+          if (status) {
+            if (err && err.message === "rate_limited") {
+              status.textContent = "Too many attempts. Please try again later.";
+            } else if (err && err.message === "client_id_unavailable") {
+              status.textContent = "Could not identify this browser. Please enable storage.";
+            } else if (isLocalHost && err && err.message) {
+              status.textContent = err.message;
+            } else {
+              status.textContent = "Could not save like. Please try again.";
+            }
+          }
+          if (err && err.message === "rate_limited") {
+            track("petition_like_rate_limited");
+          }
+          track("petition_like_save_failed");
+        }
+      });
+    }
+
+    initializeShareOptions();
+    loadLikeCount();
   })();
 </script>

@@ -100,20 +100,83 @@ body {
 }
 
 .petition-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.6rem;
+  display: grid;
+  gap: 0.85rem;
   margin: 0 0 1rem;
+}
+
+.share-panel {
+  border: 1px solid #d4d0dd;
+  border-radius: 16px;
+  background: #f5f4f8;
+  padding: 1rem;
+}
+
+.share-panel__title {
+  margin: 0 0 0.9rem;
+  font-size: 2rem;
+  line-height: 1.1;
+  color: #3d3948;
+}
+
+.share-panel__content {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.share-panel__options {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.share-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.82rem 1rem;
+  border: 1px solid #a8a1b6;
+  border-radius: 10px;
+  background: #fff;
+  color: #3d3948;
+  font-size: 1.04rem;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.share-option:hover {
+  background: #f2f0f7;
+}
+
+.share-option:focus-visible {
+  outline: 2px solid #8577a0;
+  outline-offset: 2px;
+}
+
+.share-option svg {
+  width: 1.22rem;
+  height: 1.22rem;
+  fill: currentColor;
+}
+
+.like-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
 }
 
 .action-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  border: 1px solid transparent;
+  border: 1px solid #7dd3fc;
   border-radius: 999px;
-  color: #fff;
+  background: #bae6fd;
+  color: #0f172a;
   padding: 0.45rem 0.85rem;
   cursor: pointer;
   font: inherit;
@@ -123,27 +186,6 @@ body {
   width: 1rem;
   height: 1rem;
   fill: currentColor;
-}
-
-.action-btn .action-icon-link {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-#copy-link-btn {
-  background: #bae6fd;
-  border-color: #7dd3fc;
-  color: #0f172a;
-}
-
-#copy-link-btn:hover {
-  background: #7dd3fc;
-}
-
-#like-btn {
-  background: #bae6fd;
-  border-color: #7dd3fc;
-  color: #0f172a;
 }
 
 #like-btn:hover {
@@ -164,4 +206,16 @@ body {
 .action-status {
   font-size: 0.95rem;
   color: #4b4b57;
+}
+
+.like-meta {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+@media (max-width: 850px) {
+  .share-panel__title {
+    font-size: 1.65rem;
+  }
 }
