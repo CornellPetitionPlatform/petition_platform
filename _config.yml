@@ -50,7 +50,7 @@ port                : 4000
 host                : 127.0.0.1
 url                 : "https://cornellpetitionplatform.github.io"
 baseurl             : "/petition_platform"
-likes_api_url       : ""
+likes_api_url       : "https://petition-likes-api.isc36.workers.dev"
 show_dir_listing    : false
 
 # Outputting

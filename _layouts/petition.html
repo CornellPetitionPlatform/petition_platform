@@ -271,12 +271,13 @@ layout: default
     }
 
     if (likeBtn) {
-      if (!likesApiBase) {
-        likeBtn.disabled = true;
-        if (status) status.textContent = "Likes are not configured yet";
-      }
-
       likeBtn.addEventListener("click", async function () {
+        if (!likesApiBase) {
+          if (status) status.textContent = "Likes are temporarily unavailable.";
+          track("petition_like_not_configured");
+          return;
+        }
+
         likeBtn.disabled = true;
 
         try {
@@ -297,6 +298,8 @@ layout: default
               status.textContent = "Too many attempts. Please try again later.";
             } else if (err && err.message === "client_id_unavailable") {
               status.textContent = "Could not identify this browser. Please enable storage.";
+            } else if (err && err.message === "Likes API not configured") {
+              status.textContent = "Likes are temporarily unavailable.";
             } else if (isLocalHost && err && err.message) {
               status.textContent = err.message;
             } else {
