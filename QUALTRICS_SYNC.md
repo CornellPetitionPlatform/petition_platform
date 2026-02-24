@@ -5,6 +5,7 @@ This repo can automatically create/update petition pages from Qualtrics response
 ## What it does
 
 - Exports responses from a Qualtrics survey as CSV.
+- Reads only the two configured content columns (`QUALTRICS_TITLE_COLUMN` and `QUALTRICS_BODY_COLUMN`) from each response row.
 - Maps each qualifying response to a file in `_petitions/`.
 - Creates new files for new responses.
 - Updates existing files when a response with the same `qualtrics_response_id` changes.
@@ -26,6 +27,14 @@ Workflow: `.github/workflows/qualtrics-sync.yml`
 - `QUALTRICS_PUBLISHED_COLUMN` (default: `Finished`)
 - `QUALTRICS_PUBLISHED_VALUE` (default: `1`)
 - `QUALTRICS_RECORDED_DATE_COLUMN` (default: `RecordedDate`)
+
+## Privacy behavior
+
+- Petition content is read only from two survey columns:
+  - `QUALTRICS_TITLE_COLUMN`
+  - `QUALTRICS_BODY_COLUMN`
+- The sync script ignores all other survey question columns.
+- Optional metadata columns (`ResponseId`, `Finished`, `RecordedDate`) are only used for dedupe/publish filtering/front-matter metadata.
 
 ## How to find column names
 
