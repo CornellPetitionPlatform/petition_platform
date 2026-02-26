@@ -3,7 +3,7 @@ name: Sync petitions from Qualtrics
 on:
   workflow_dispatch:
   schedule:
-    - cron: "15 * * * *"
+    - cron: "15 0 * * *"
 
 permissions:
   contents: write
@@ -27,6 +27,7 @@ jobs:
           QUALTRICS_SURVEY_ID: ${{ secrets.QUALTRICS_SURVEY_ID }}
           QUALTRICS_TITLE_COLUMN: ${{ secrets.QUALTRICS_TITLE_COLUMN }}
           QUALTRICS_BODY_COLUMN: ${{ secrets.QUALTRICS_BODY_COLUMN }}
+          QUALTRICS_URL_ENCRYPTION_KEY: ${{ secrets.QUALTRICS_URL_ENCRYPTION_KEY }}
           QUALTRICS_RESPONSE_ID_COLUMN: ${{ secrets.QUALTRICS_RESPONSE_ID_COLUMN }}
           QUALTRICS_PUBLISHED_COLUMN: ${{ secrets.QUALTRICS_PUBLISHED_COLUMN }}
           QUALTRICS_PUBLISHED_VALUE: ${{ secrets.QUALTRICS_PUBLISHED_VALUE }}

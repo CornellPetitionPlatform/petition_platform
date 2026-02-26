@@ -20,6 +20,7 @@ Workflow: `.github/workflows/qualtrics-sync.yml`
 - `QUALTRICS_SURVEY_ID`
 - `QUALTRICS_TITLE_COLUMN` (CSV column name containing petition title)
 - `QUALTRICS_BODY_COLUMN` (CSV column name containing petition body)
+- `QUALTRICS_URL_ENCRYPTION_KEY` (at least 16 characters; used to generate encrypted URL-safe petition IDs)
 
 ## Optional GitHub Secrets
 
@@ -35,6 +36,7 @@ Workflow: `.github/workflows/qualtrics-sync.yml`
   - `QUALTRICS_BODY_COLUMN`
 - The sync script ignores all other survey question columns.
 - Optional metadata columns (`ResponseId`, `Finished`, `RecordedDate`) are only used for dedupe/publish filtering/front-matter metadata.
+- Petition URLs are generated from an encrypted token derived from `ResponseId` and `QUALTRICS_URL_ENCRYPTION_KEY`, so raw response IDs are not exposed in URLs.
 
 ## How to find column names
 
@@ -52,9 +54,10 @@ QUALTRICS_API_TOKEN="..." \
 QUALTRICS_SURVEY_ID="SV_..." \
 QUALTRICS_TITLE_COLUMN="QID1_TEXT" \
 QUALTRICS_BODY_COLUMN="QID2_TEXT" \
+QUALTRICS_URL_ENCRYPTION_KEY="replace-with-long-random-secret" \
 python scripts/sync_qualtrics_petitions.py --dry-run
 ```
 
 ## Schedule
 
-The workflow runs hourly at minute 15 and can also be run manually via `workflow_dispatch`.
+The workflow runs daily at `00:15 UTC` and can also be run manually via `workflow_dispatch`.
