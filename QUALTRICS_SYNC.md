@@ -28,6 +28,7 @@ Workflow: `.github/workflows/qualtrics-sync.yml`
 - `QUALTRICS_PUBLISHED_COLUMN` (default: `Finished`)
 - `QUALTRICS_PUBLISHED_VALUE` (default: `1`)
 - `QUALTRICS_RECORDED_DATE_COLUMN` (default: `RecordedDate`)
+- `QUALTRICS_PR_BOT_TOKEN` (personal access token for a separate bot/user account used to auto-approve sync PRs)
 
 ## Privacy behavior
 
@@ -61,3 +62,9 @@ python scripts/sync_qualtrics_petitions.py --dry-run
 ## Schedule
 
 The workflow runs daily at `00:15 UTC` and can also be run manually via `workflow_dispatch`.
+
+## Branch protection mode
+
+- The workflow creates/updates a PR (`codex/qualtrics-sync`) instead of pushing directly to `main`.
+- If `QUALTRICS_PR_BOT_TOKEN` is set, the workflow auto-approves that PR.
+- Use a separate bot/user token for approval; the PR author cannot be the same identity as the approver.
