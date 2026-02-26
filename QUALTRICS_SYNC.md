@@ -6,6 +6,7 @@ This repo can automatically create/update petition pages from Qualtrics response
 
 - Exports responses from a Qualtrics survey as CSV.
 - Reads only the two configured content columns (`QUALTRICS_TITLE_COLUMN` and `QUALTRICS_BODY_COLUMN`) from each response row.
+- Posts only completed responses (`Finished = 1` by default).
 - Maps each qualifying response to a file in `_petitions/`.
 - Creates new files for new responses.
 - Updates existing files when a response with the same `qualtrics_response_id` changes.
