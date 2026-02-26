@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import csv
+import hashlib
+import hmac
 import io
 import json
 import os
-import re
 import sys
 import time
 import urllib.error
@@ -16,7 +18,7 @@ import urllib.request
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -32,12 +34,6 @@ def env_required(name: str) -> str:
 
 def env_optional(name: str, default: str = "") -> str:
     return os.environ.get(name, default).strip()
-
-
-def slugify(value: str) -> str:
-    value = value.lower().strip()
-    value = re.sub(r"[^a-z0-9]+", "-", value)
-    return value.strip("-") or "petition"
 
 
 def yaml_quote(value: str) -> str:
@@ -80,13 +76,23 @@ def scan_existing_petitions() -> Dict[str, Path]:
     return by_response_id
 
 
-def choose_petition_path(title: str, response_id: str, existing_paths: Iterable[Path]) -> Path:
-    existing_set = {p.resolve() for p in existing_paths}
-    suffix = slugify(response_id)[-8:] or "response"
-    base = f"{slugify(title)}-{suffix}"
+def encrypted_response_token(response_id: str, key: str) -> str:
+    digest = hmac.new(
+        key.encode("utf-8"),
+        response_id.encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+    return base64.urlsafe_b64encode(digest[:15]).decode("ascii").rstrip("=")
+
+
+def choose_petition_path(response_id: str, key: str, current_path: Optional[Path] = None) -> Path:
+    current_resolved = current_path.resolve() if current_path is not None else None
+    base = f"petition-{encrypted_response_token(response_id, key)}"
     candidate = PETITIONS_DIR / f"{base}.md"
     counter = 2
-    while candidate.exists() and candidate.resolve() not in existing_set:
+    while candidate.exists():
+        if current_resolved is not None and candidate.resolve() == current_resolved:
+            break
         candidate = PETITIONS_DIR / f"{base}-{counter}.md"
         counter += 1
     return candidate
@@ -103,12 +109,22 @@ class QualtricsConfig:
     published_column: str
     published_value: str
     recorded_date_column: str
+    url_encryption_key: str
     poll_interval_seconds: float
     poll_timeout_seconds: float
 
 
+@dataclass
+class PetitionRow:
+    title: str
+    body: str
+    response_id: str
+    recorded_date: str
+    is_published: bool
+
+
 def load_config() -> QualtricsConfig:
-    return QualtricsConfig(
+    cfg = QualtricsConfig(
         base_url=env_required("QUALTRICS_BASE_URL").rstrip("/"),
         api_token=env_required("QUALTRICS_API_TOKEN"),
         survey_id=env_required("QUALTRICS_SURVEY_ID"),
@@ -118,9 +134,15 @@ def load_config() -> QualtricsConfig:
         published_column=env_optional("QUALTRICS_PUBLISHED_COLUMN", "Finished"),
         published_value=env_optional("QUALTRICS_PUBLISHED_VALUE", "1"),
         recorded_date_column=env_optional("QUALTRICS_RECORDED_DATE_COLUMN", "RecordedDate"),
+        url_encryption_key=env_required("QUALTRICS_URL_ENCRYPTION_KEY"),
         poll_interval_seconds=float(env_optional("QUALTRICS_POLL_INTERVAL_SECONDS", "2")),
         poll_timeout_seconds=float(env_optional("QUALTRICS_POLL_TIMEOUT_SECONDS", "180")),
     )
+    if cfg.title_column == cfg.body_column:
+        raise RuntimeError("QUALTRICS_TITLE_COLUMN and QUALTRICS_BODY_COLUMN must be different columns")
+    if len(cfg.url_encryption_key) < 16:
+        raise RuntimeError("QUALTRICS_URL_ENCRYPTION_KEY must be at least 16 characters")
+    return cfg
 
 
 def api_request(
@@ -192,20 +214,59 @@ def download_export_zip(config: QualtricsConfig, file_id: str) -> bytes:
     return body
 
 
-def rows_from_zip(zip_bytes: bytes) -> List[Dict[str, str]]:
+def rows_from_zip(zip_bytes: bytes, cfg: QualtricsConfig) -> List[PetitionRow]:
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
         csv_names = [name for name in zf.namelist() if name.lower().endswith(".csv")]
         if not csv_names:
             raise RuntimeError("No CSV file found in Qualtrics export zip")
         with zf.open(csv_names[0], "r") as fp:
             text = fp.read().decode("utf-8-sig")
-    return list(csv.DictReader(io.StringIO(text)))
 
+    reader = csv.reader(io.StringIO(text))
+    headers = next(reader, None)
+    if headers is None:
+        return []
 
-def should_include_row(row: Dict[str, str], cfg: QualtricsConfig) -> bool:
-    if not cfg.published_column:
-        return True
-    return (row.get(cfg.published_column, "").strip() == cfg.published_value)
+    header_index = {header.strip(): idx for idx, header in enumerate(headers)}
+    required_columns = [cfg.title_column, cfg.body_column, cfg.response_id_column]
+    if cfg.published_column:
+        required_columns.append(cfg.published_column)
+    if cfg.recorded_date_column:
+        required_columns.append(cfg.recorded_date_column)
+
+    missing_columns = sorted({name for name in required_columns if name and name not in header_index})
+    if missing_columns:
+        missing = ", ".join(missing_columns)
+        raise RuntimeError(f"Missing required column(s) in Qualtrics CSV export: {missing}")
+
+    def cell(values: List[str], column_name: str) -> str:
+        if not column_name:
+            return ""
+        idx = header_index.get(column_name)
+        if idx is None or idx >= len(values):
+            return ""
+        return values[idx].strip()
+
+    # Only map allowlisted columns so we do not propagate unrelated survey fields.
+    rows: List[PetitionRow] = []
+    for values in reader:
+        title = cell(values, cfg.title_column)
+        body = normalize_body(cell(values, cfg.body_column))
+        response_id = cell(values, cfg.response_id_column)
+        recorded_date = cell(values, cfg.recorded_date_column)
+        is_published = True
+        if cfg.published_column:
+            is_published = cell(values, cfg.published_column) == cfg.published_value
+        rows.append(
+            PetitionRow(
+                title=title,
+                body=body,
+                response_id=response_id,
+                recorded_date=recorded_date,
+                is_published=is_published,
+            )
+        )
+    return rows
 
 
 def render_markdown(
@@ -227,41 +288,44 @@ def render_markdown(
     return "\n".join(front) + body.rstrip() + "\n"
 
 
-def sync_rows(rows: List[Dict[str, str]], cfg: QualtricsConfig, dry_run: bool) -> Tuple[int, int, int]:
+def sync_rows(rows: List[PetitionRow], cfg: QualtricsConfig, dry_run: bool) -> Tuple[int, int, int]:
     existing_by_response = scan_existing_petitions()
     created = 0
     updated = 0
     skipped = 0
 
     for row in rows:
-        if not should_include_row(row, cfg):
+        if not row.is_published:
             skipped += 1
             continue
 
-        title = row.get(cfg.title_column, "").strip()
-        body = normalize_body(row.get(cfg.body_column, ""))
-        response_id = row.get(cfg.response_id_column, "").strip()
-        recorded_date = row.get(cfg.recorded_date_column, "").strip()
+        title = row.title
+        body = row.body
+        response_id = row.response_id
+        recorded_date = row.recorded_date
 
         if not response_id or not title or not body:
             skipped += 1
             continue
 
-        target = existing_by_response.get(response_id)
-        if target is None:
-            target = choose_petition_path(title, response_id, existing_by_response.values())
+        current = existing_by_response.get(response_id)
+        target = choose_petition_path(response_id, cfg.url_encryption_key, current)
+        moved = current is not None and current.resolve() != target.resolve()
+        if moved and not dry_run:
+            current.rename(target)
 
         markdown = render_markdown(title, body, response_id, recorded_date)
-        already = target.read_text(encoding="utf-8") if target.exists() else None
-        if already == markdown:
+        baseline = current if moved and dry_run and current is not None else target
+        already = baseline.read_text(encoding="utf-8") if baseline.exists() else None
+        if already == markdown and not moved:
             skipped += 1
             existing_by_response[response_id] = target
             continue
 
-        if not dry_run:
+        if not dry_run and already != markdown:
             target.write_text(markdown, encoding="utf-8")
 
-        if target.exists() and already is not None:
+        if current is not None:
             updated += 1
         else:
             created += 1
@@ -284,7 +348,7 @@ def main() -> int:
         progress_id = start_export(cfg)
         file_id = wait_for_export(cfg, progress_id)
         zip_bytes = download_export_zip(cfg, file_id)
-        rows = rows_from_zip(zip_bytes)
+        rows = rows_from_zip(zip_bytes, cfg)
         created, updated, skipped = sync_rows(rows, cfg, args.dry_run)
     except Exception as exc:  # pylint: disable=broad-except
         print(f"ERROR: {exc}", file=sys.stderr)
