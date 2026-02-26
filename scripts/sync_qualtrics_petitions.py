@@ -33,7 +33,11 @@ def env_required(name: str) -> str:
 
 
 def env_optional(name: str, default: str = "") -> str:
-    return os.environ.get(name, default).strip()
+    value = os.environ.get(name)
+    if value is None:
+        return default.strip()
+    value = value.strip()
+    return value if value else default.strip()
 
 
 def yaml_quote(value: str) -> str:
@@ -44,6 +48,28 @@ def yaml_quote(value: str) -> str:
 def normalize_body(value: str) -> str:
     value = value.replace("\r\n", "\n").replace("\r", "\n")
     return value.strip()
+
+
+def parse_bool_token(value: str) -> Optional[bool]:
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "t", "yes", "y"}:
+        return True
+    if normalized in {"0", "false", "f", "no", "n"}:
+        return False
+    return None
+
+
+def published_matches(value: str, expected: str) -> bool:
+    value_normalized = value.strip()
+    expected_normalized = expected.strip()
+    if value_normalized == expected_normalized:
+        return True
+
+    value_bool = parse_bool_token(value_normalized)
+    expected_bool = parse_bool_token(expected_normalized)
+    if value_bool is not None and expected_bool is not None:
+        return value_bool == expected_bool
+    return False
 
 
 def read_front_matter_value(path: Path, key: str) -> Optional[str]:
@@ -142,6 +168,10 @@ def load_config() -> QualtricsConfig:
         raise RuntimeError("QUALTRICS_TITLE_COLUMN and QUALTRICS_BODY_COLUMN must be different columns")
     if len(cfg.url_encryption_key) < 16:
         raise RuntimeError("QUALTRICS_URL_ENCRYPTION_KEY must be at least 16 characters")
+    if not cfg.published_column:
+        cfg.published_column = "Finished"
+    if not cfg.published_value:
+        cfg.published_value = "1"
     return cfg
 
 
@@ -228,9 +258,7 @@ def rows_from_zip(zip_bytes: bytes, cfg: QualtricsConfig) -> List[PetitionRow]:
         return []
 
     header_index = {header.strip(): idx for idx, header in enumerate(headers)}
-    required_columns = [cfg.title_column, cfg.body_column, cfg.response_id_column]
-    if cfg.published_column:
-        required_columns.append(cfg.published_column)
+    required_columns = [cfg.title_column, cfg.body_column, cfg.response_id_column, cfg.published_column]
     if cfg.recorded_date_column:
         required_columns.append(cfg.recorded_date_column)
 
@@ -254,9 +282,7 @@ def rows_from_zip(zip_bytes: bytes, cfg: QualtricsConfig) -> List[PetitionRow]:
         body = normalize_body(cell(values, cfg.body_column))
         response_id = cell(values, cfg.response_id_column)
         recorded_date = cell(values, cfg.recorded_date_column)
-        is_published = True
-        if cfg.published_column:
-            is_published = cell(values, cfg.published_column) == cfg.published_value
+        is_published = published_matches(cell(values, cfg.published_column), cfg.published_value)
         rows.append(
             PetitionRow(
                 title=title,
