@@ -1,0 +1,10 @@
+name = "qualtrics-submit-api"
+main = "src/index.js"
+compatibility_date = "2026-03-04"
+
+[vars]
+ALLOWED_ORIGIN = "*"
+GITHUB_OWNER = "cornellpetitionplatform"
+GITHUB_REPO = "petition_platform"
+DISPATCH_EVENT_TYPE = "qualtrics_sync"
+SITE_BASE_URL = "https://cornellpetitionplatform.github.io/petition_platform"

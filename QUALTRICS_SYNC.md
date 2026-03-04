@@ -31,6 +31,11 @@ Workflow: `.github/workflows/qualtrics-sync.yml`
 - `QUALTRICS_RECORDED_DATE_COLUMN` (default: `RecordedDate`)
 - `QUALTRICS_PR_BOT_TOKEN` (personal access token for a separate bot/user account used to auto-approve sync PRs)
 
+## Optional runtime env
+
+- `QUALTRICS_TARGET_RESPONSE_ID`: when set, the sync run only processes that response ID.
+- `QUALTRICS_TARGET_TITLE` + `QUALTRICS_TARGET_BODY`: when both are set with `QUALTRICS_TARGET_RESPONSE_ID`, sync uses these direct values for the petition content instead of pulling title/body from the CSV export.
+
 ## Privacy behavior
 
 - Petition content is read only from two survey columns:
@@ -60,9 +65,53 @@ QUALTRICS_URL_ENCRYPTION_KEY="replace-with-long-random-secret" \
 python scripts/sync_qualtrics_petitions.py --dry-run
 ```
 
-## Schedule
+## Triggering sync
 
-The workflow runs daily at `00:15 UTC` and can also be run manually via `workflow_dispatch`.
+- The workflow runs when it receives a GitHub `repository_dispatch` event with type `qualtrics_sync`.
+- You can still run it manually with `workflow_dispatch`.
+
+## Trigger from Qualtrics (API call)
+
+In Qualtrics Survey Flow/Workflows, add a **Web Service** task that runs on response submission and call:
+
+```bash
+curl -X POST "https://api.github.com/repos/<OWNER>/<REPO>/dispatches" \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer <GITHUB_TOKEN>" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  -d '{"event_type":"qualtrics_sync"}'
+```
+
+Notes:
+
+- Use a GitHub token with permission to dispatch workflow events for this repository.
+- Keep this token in Qualtrics as a secret/private credential.
+- The workflow has concurrency enabled (`qualtrics-sync` group), so overlapping triggers collapse to one active run.
+
+## Completion API (recommended when you need to show the URL immediately)
+
+If you want to call one endpoint on survey completion and immediately get back the participant's petition URL:
+
+1. Deploy `cloudflare/qualtrics-submit-api`.
+2. Configure Qualtrics Web Service to call:
+
+```http
+POST https://<your-worker>.workers.dev/submit
+Authorization: Bearer <QUALTRICS_SUBMIT_TOKEN>
+Content-Type: application/json
+
+{
+  "response_id":"${e://Field/ResponseID}",
+  "ai_title":"${e://Field/ai_title}",
+  "ai_draft":"${e://Field/ai_draft}"
+}
+```
+
+3. Map `petition_url` from the JSON response to a Qualtrics Embedded Data field (for example `petition_url`).
+4. Show `${e://Field/petition_url}` on the end-of-survey page.
+
+This API dispatches the same `qualtrics_sync` workflow and returns the deterministic petition URL immediately.  
+When `ai_title` and `ai_draft` are provided, those values are used as the petition content for that response ID.
 
 ## Branch protection mode
 

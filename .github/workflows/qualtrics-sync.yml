@@ -2,8 +2,13 @@ name: Sync petitions from Qualtrics
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "15 0 * * *"
+  repository_dispatch:
+    types:
+      - qualtrics_sync
+
+concurrency:
+  group: qualtrics-sync
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -33,21 +38,55 @@ jobs:
           QUALTRICS_PUBLISHED_COLUMN: ${{ secrets.QUALTRICS_PUBLISHED_COLUMN }}
           QUALTRICS_PUBLISHED_VALUE: ${{ secrets.QUALTRICS_PUBLISHED_VALUE }}
           QUALTRICS_RECORDED_DATE_COLUMN: ${{ secrets.QUALTRICS_RECORDED_DATE_COLUMN }}
+          QUALTRICS_TARGET_RESPONSE_ID: ${{ github.event.client_payload.response_id || '' }}
+          QUALTRICS_TARGET_TITLE: ${{ github.event.client_payload.title || '' }}
+          QUALTRICS_TARGET_BODY: ${{ github.event.client_payload.body || '' }}
         run: python scripts/sync_qualtrics_petitions.py
 
-      - name: Create pull request
+      - name: Create or update pull request
         id: create_pr
-        uses: peter-evans/create-pull-request@v6
-        with:
-          commit-message: Sync petitions from Qualtrics
-          branch: codex/qualtrics-sync
-          delete-branch: true
-          title: "Sync petitions from Qualtrics"
-          body: |
-            Automated sync of petition files from Qualtrics responses.
-          labels: |
-            automation
-            qualtrics
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BASE_BRANCH: ${{ github.event.repository.default_branch || 'main' }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No changes to commit."
+            echo "pull-request-number=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          BRANCH="codex/qualtrics-sync"
+          TITLE="Sync petitions from Qualtrics"
+          BODY="Automated sync of petition files from Qualtrics responses."
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B "$BRANCH"
+          git add -A
+          git commit -m "$TITLE"
+          git push --force-with-lease origin "$BRANCH"
+
+          pr_number="$(gh pr list --repo "$REPO" --head "$BRANCH" --base "$BASE_BRANCH" --json number --jq '.[0].number')"
+          if [ -z "$pr_number" ] || [ "$pr_number" = "null" ]; then
+            gh pr create \
+              --repo "$REPO" \
+              --base "$BASE_BRANCH" \
+              --head "$BRANCH" \
+              --title "$TITLE" \
+              --body "$BODY"
+            pr_number="$(gh pr view "$BRANCH" --repo "$REPO" --json number --jq '.number')"
+          else
+            gh pr edit "$pr_number" \
+              --repo "$REPO" \
+              --title "$TITLE" \
+              --body "$BODY"
+          fi
+
+          echo "pull-request-number=$pr_number" >> "$GITHUB_OUTPUT"
 
       - name: Auto-approve pull request
         if: steps.create_pr.outputs.pull-request-number != '' && env.APPROVAL_TOKEN != ''
