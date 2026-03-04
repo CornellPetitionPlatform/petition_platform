@@ -117,4 +117,5 @@ When `ai_title` and `ai_draft` are provided, those values are used as the petiti
 
 - The workflow creates/updates a PR (`codex/qualtrics-sync`) instead of pushing directly to `main`.
 - If `QUALTRICS_PR_BOT_TOKEN` is set, the workflow auto-approves that PR.
+- The workflow then enables auto-merge on that PR (`squash`), so it merges after required checks pass.
 - Use a separate bot/user token for approval; the PR author cannot be the same identity as the approver.
