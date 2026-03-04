@@ -1,12 +1,6 @@
 # Qualtrics Submit API (Cloudflare Worker)
 
-This Worker receives a survey completion call from Qualtrics, triggers the GitHub `qualtrics_sync` dispatch, and returns the deterministic petition URL for that response.
-
-## Why this exists
-
-- Qualtrics can call one endpoint at survey completion.
-- You get a JSON response containing `petition_url`.
-- You can place that URL into an embedded data field and show it on the end-of-survey page.
+This Worker receives a survey completion call from Qualtrics, dispatches the GitHub `qualtrics_sync` workflow, and returns the deterministic static petition URL for that response.
 
 ## Endpoint
 
@@ -16,19 +10,13 @@ This Worker receives a survey completion call from Qualtrics, triggers the GitHu
 
 ```json
 {
-  "response_id": "R_abc123..."
-}
-```
-
-Optional direct-content fields (recommended for immediate content handoff):
-
-```json
-{
   "response_id": "R_abc123...",
-  "ai_title": "My petition title",
-  "ai_draft": "My petition body text"
+  "ai_title": "Petition title",
+  "ai_draft": "Petition body text"
 }
 ```
+
+`ai_title`/`ai_draft` are optional, but if one is provided both must be provided.
 
 Response:
 
@@ -44,8 +32,6 @@ Response:
 ```
 
 ## Required secrets
-
-Set these with Wrangler:
 
 ```bash
 cd /Users/isabelcorpus/Desktop/petition_platform/cloudflare/qualtrics-submit-api
@@ -75,14 +61,12 @@ wrangler deploy
 
 ## Qualtrics setup
 
-In Qualtrics Survey Flow (or Workflows), add a **Web Service** element that runs after response completion:
+In Qualtrics Survey Flow (or Workflows), add a Web Service step that runs after completion:
 
 - Method: `POST`
 - URL: `https://<your-worker>.workers.dev/submit`
-- Header:
-  - `Authorization: Bearer <QUALTRICS_SUBMIT_TOKEN>`
-- Body (JSON):
-  - Include `ai_title` and `ai_draft` from embedded data if you want this endpoint to directly pass petition content into the sync run.
+- Header: `X-Auth-Token: <QUALTRICS_SUBMIT_TOKEN>`
+- Body (`application/json`):
 
 ```json
 {
@@ -92,12 +76,9 @@ In Qualtrics Survey Flow (or Workflows), add a **Web Service** element that runs
 }
 ```
 
-Map `petition_url` from the JSON response into an embedded data field (for example, `petition_url`) and display it on the end-of-survey page:
-
-`Your petition URL: ${e://Field/petition_url}`
+Map `petition_url` from the JSON response into embedded data (for example `petition_url`) and show `${e://Field/petition_url}` on the end page.
 
 ## Notes
 
-- This endpoint dispatches the repository sync workflow and returns the final URL immediately.
-- When `ai_title` and `ai_draft` are included, the workflow uses those values directly for petition content for that response ID.
-- If your GitHub flow requires PR merge before publish, the URL may not be live until that merge/deploy completes.
+- This endpoint dispatches the repository sync workflow and returns the final static URL immediately.
+- If your GitHub flow requires PR merge before publish, the URL may not be live until merge/deploy completes.
