@@ -136,6 +136,9 @@ class QualtricsConfig:
     published_value: str
     recorded_date_column: str
     url_encryption_key: str
+    target_response_id: str
+    target_title: str
+    target_body: str
     poll_interval_seconds: float
     poll_timeout_seconds: float
 
@@ -161,6 +164,9 @@ def load_config() -> QualtricsConfig:
         published_value=env_optional("QUALTRICS_PUBLISHED_VALUE", "1"),
         recorded_date_column=env_optional("QUALTRICS_RECORDED_DATE_COLUMN", "RecordedDate"),
         url_encryption_key=env_required("QUALTRICS_URL_ENCRYPTION_KEY"),
+        target_response_id=env_optional("QUALTRICS_TARGET_RESPONSE_ID", ""),
+        target_title=env_optional("QUALTRICS_TARGET_TITLE", ""),
+        target_body=env_optional("QUALTRICS_TARGET_BODY", ""),
         poll_interval_seconds=float(env_optional("QUALTRICS_POLL_INTERVAL_SECONDS", "2")),
         poll_timeout_seconds=float(env_optional("QUALTRICS_POLL_TIMEOUT_SECONDS", "180")),
     )
@@ -172,6 +178,8 @@ def load_config() -> QualtricsConfig:
         cfg.published_column = "Finished"
     if not cfg.published_value:
         cfg.published_value = "1"
+    if (cfg.target_title and not cfg.target_body) or (cfg.target_body and not cfg.target_title):
+        raise RuntimeError("QUALTRICS_TARGET_TITLE and QUALTRICS_TARGET_BODY must both be set together")
     return cfg
 
 
@@ -319,8 +327,13 @@ def sync_rows(rows: List[PetitionRow], cfg: QualtricsConfig, dry_run: bool) -> T
     created = 0
     updated = 0
     skipped = 0
+    target_response_id = cfg.target_response_id.strip()
 
     for row in rows:
+        if target_response_id and row.response_id != target_response_id:
+            skipped += 1
+            continue
+
         if not row.is_published:
             skipped += 1
             continue
@@ -371,19 +384,32 @@ def main() -> int:
 
     try:
         cfg = load_config()
-        progress_id = start_export(cfg)
-        file_id = wait_for_export(cfg, progress_id)
-        zip_bytes = download_export_zip(cfg, file_id)
-        rows = rows_from_zip(zip_bytes, cfg)
+        if cfg.target_response_id and cfg.target_title and cfg.target_body:
+            rows = [
+                PetitionRow(
+                    title=cfg.target_title,
+                    body=normalize_body(cfg.target_body),
+                    response_id=cfg.target_response_id,
+                    recorded_date="",
+                    is_published=True,
+                )
+            ]
+        else:
+            progress_id = start_export(cfg)
+            file_id = wait_for_export(cfg, progress_id)
+            zip_bytes = download_export_zip(cfg, file_id)
+            rows = rows_from_zip(zip_bytes, cfg)
         created, updated, skipped = sync_rows(rows, cfg, args.dry_run)
     except Exception as exc:  # pylint: disable=broad-except
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
     action = "would be " if args.dry_run else ""
+    target_note = f", target_response_id={cfg.target_response_id}" if cfg.target_response_id else ""
+    direct_note = ", direct_content=true" if cfg.target_title and cfg.target_body else ""
     print(
         f"Sync complete: {len(rows)} rows processed, "
-        f"{action}created {created}, {action}updated {updated}, skipped {skipped}"
+        f"{action}created {created}, {action}updated {updated}, skipped {skipped}{target_note}{direct_note}"
     )
     return 0
 
