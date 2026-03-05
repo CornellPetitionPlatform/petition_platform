@@ -1,12 +1,26 @@
 # Qualtrics Submit API (Cloudflare Worker)
 
-This Worker receives a survey completion call from Qualtrics, dispatches the GitHub `qualtrics_sync` workflow, and returns the deterministic static petition URL for that response.
+This Worker accepts survey completion requests, dispatches your `qualtrics_sync` workflow, and returns the deterministic static petition URL.
 
-## Endpoint
+It also supports:
 
-- `POST /submit`
-  - Auth header: `Authorization: Bearer <QUALTRICS_SUBMIT_TOKEN>` (or `X-Auth-Token`)
-  - JSON body:
+- waiting until a petition URL is live (checks every 10 seconds)
+- deleting a petition by URL, slug, or response ID
+
+## Authentication
+
+All POST endpoints require one of:
+
+- `X-Auth-Token: <QUALTRICS_SUBMIT_TOKEN>`
+- `Authorization: Bearer <QUALTRICS_SUBMIT_TOKEN>`
+
+## Endpoints
+
+### `POST /submit`
+
+Create/update petition content.
+
+Body:
 
 ```json
 {
@@ -15,8 +29,6 @@ This Worker receives a survey completion call from Qualtrics, dispatches the Git
   "ai_draft": "Petition body text"
 }
 ```
-
-`ai_title`/`ai_draft` are optional, but if one is provided both must be provided.
 
 Response:
 
@@ -31,6 +43,87 @@ Response:
 }
 ```
 
+### `POST /wait-until-posted`
+
+Checks whether a petition URL is live. If not yet live, retries every 10 seconds until posted or timeout.
+
+Body:
+
+```json
+{
+  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-abcDEF.../",
+  "max_wait_seconds": 300
+}
+```
+
+- `max_wait_seconds` is optional (default `300`, max `900`).
+
+Response when live:
+
+```json
+{
+  "ok": true,
+  "live": true,
+  "petition_url": "https://...",
+  "attempts": 4,
+  "elapsed_seconds": 31
+}
+```
+
+Response when timed out:
+
+```json
+{
+  "ok": true,
+  "live": false,
+  "petition_url": "https://...",
+  "attempts": 30,
+  "elapsed_seconds": 300
+}
+```
+
+### `POST /delete`
+
+Deletes a petition through your existing static sync workflow.
+
+Provide at least one identifier:
+
+- `response_id` (for deletion from response ID / list contexts)
+- `petition_slug`
+- `petition_url` (for deletion from specific petition URL)
+
+Body examples:
+
+```json
+{
+  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-abcDEF.../"
+}
+```
+
+```json
+{
+  "petition_slug": "petition-abcDEF..."
+}
+```
+
+```json
+{
+  "response_id": "R_abc123..."
+}
+```
+
+Response:
+
+```json
+{
+  "ok": true,
+  "deleted_by_response_id": "R_abc123...",
+  "deleted_by_slug": "petition-abcDEF...",
+  "deleted_by_url": "https://...",
+  "dispatched_event_type": "qualtrics_sync"
+}
+```
+
 ## Required secrets
 
 ```bash
@@ -40,18 +133,6 @@ wrangler secret put GITHUB_TOKEN
 wrangler secret put URL_ENCRYPTION_KEY
 ```
 
-- `QUALTRICS_SUBMIT_TOKEN`: shared secret between Qualtrics and this Worker.
-- `GITHUB_TOKEN`: token that can call `POST /repos/{owner}/{repo}/dispatches`.
-- `URL_ENCRYPTION_KEY`: must exactly match `QUALTRICS_URL_ENCRYPTION_KEY` in GitHub secrets.
-
-## Config vars (`wrangler.toml`)
-
-- `GITHUB_OWNER`: repo owner.
-- `GITHUB_REPO`: repo name.
-- `DISPATCH_EVENT_TYPE`: defaults to `qualtrics_sync`.
-- `SITE_BASE_URL`: base site URL including Jekyll `baseurl`.
-- `ALLOWED_ORIGIN`: CORS allowlist (`*` is fine for server-to-server calls).
-
 ## Deploy
 
 ```bash
@@ -59,9 +140,7 @@ cd /Users/isabelcorpus/Desktop/petition_platform/cloudflare/qualtrics-submit-api
 wrangler deploy
 ```
 
-## Qualtrics setup
-
-In Qualtrics Survey Flow (or Workflows), add a Web Service step that runs after completion:
+## Qualtrics setup (submission)
 
 - Method: `POST`
 - URL: `https://<your-worker>.workers.dev/submit`
@@ -75,10 +154,3 @@ In Qualtrics Survey Flow (or Workflows), add a Web Service step that runs after 
   "ai_draft": "${e://Field/ai_draft}"
 }
 ```
-
-Map `petition_url` from the JSON response into embedded data (for example `petition_url`) and show `${e://Field/petition_url}` on the end page.
-
-## Notes
-
-- This endpoint dispatches the repository sync workflow and returns the final static URL immediately.
-- If your GitHub flow requires PR merge before publish, the URL may not be live until merge/deploy completes.

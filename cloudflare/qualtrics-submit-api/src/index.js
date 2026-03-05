@@ -19,7 +19,7 @@ function resolveCorsOrigin(env, request) {
 function getCorsHeaders(env, request) {
   return {
     "Access-Control-Allow-Origin": resolveCorsOrigin(env, request),
-    "Access-Control-Allow-Methods": "POST,OPTIONS",
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Auth-Token",
     Vary: "Origin"
   };
@@ -78,6 +78,30 @@ function buildPetitionUrl(siteBaseUrl, slug) {
   return `${normalizeBaseUrl(siteBaseUrl)}/petitions/${slug}/`;
 }
 
+function parsePositiveInt(value, fallback) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return Math.trunc(parsed);
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function parseSlugFromPetitionUrl(rawUrl) {
+  let parsed;
+  try {
+    parsed = new URL(String(rawUrl || "").trim());
+  } catch {
+    return null;
+  }
+  const match = parsed.pathname.match(/\/petitions\/([A-Za-z0-9_-]+)\/?$/);
+  if (!match) return null;
+  return match[1];
+}
+
 async function encryptedResponseToken(responseId, key) {
   const enc = new TextEncoder();
   const cryptoKey = await crypto.subtle.importKey(
@@ -92,6 +116,19 @@ async function encryptedResponseToken(responseId, key) {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function requireAuth(request, env) {
+  const requiredAuthToken = (env.QUALTRICS_SUBMIT_TOKEN || "").trim();
+  if (!requiredAuthToken) {
+    throw new Error("QUALTRICS_SUBMIT_TOKEN is required");
+  }
+
+  const providedToken = parseBearerToken(request);
+  if (!providedToken || !constantTimeEqual(providedToken, requiredAuthToken)) {
+    return false;
+  }
+  return true;
 }
 
 async function dispatchSync(env, payload) {
@@ -127,6 +164,192 @@ async function dispatchSync(env, payload) {
   }
 }
 
+async function isPetitionPosted(petitionUrl) {
+  try {
+    const response = await fetch(petitionUrl, {
+      method: "GET",
+      redirect: "follow",
+      headers: { Accept: "text/html,application/xhtml+xml" }
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function handleSubmit(request, env) {
+  if (!requireAuth(request, env)) {
+    return jsonResponse({ error: "Unauthorized" }, 401, env, request);
+  }
+
+  const body = await parseJsonBody(request);
+  const responseId = String(body.response_id || "").trim();
+  if (!responseId) {
+    return jsonResponse({ error: "Missing required field: response_id" }, 400, env, request);
+  }
+  if (responseId.length > 200) {
+    return jsonResponse({ error: "response_id is too long" }, 400, env, request);
+  }
+  const aiTitle = String(body.ai_title || "").trim();
+  const aiDraft = String(body.ai_draft || "").trim();
+  if (aiTitle.length > 300) {
+    return jsonResponse({ error: "ai_title is too long" }, 400, env, request);
+  }
+  if (aiDraft.length > 50000) {
+    return jsonResponse({ error: "ai_draft is too long" }, 400, env, request);
+  }
+  if ((aiTitle && !aiDraft) || (!aiTitle && aiDraft)) {
+    return jsonResponse(
+      { error: "ai_title and ai_draft must either both be provided or both omitted" },
+      400,
+      env,
+      request
+    );
+  }
+
+  const key = (env.URL_ENCRYPTION_KEY || "").trim();
+  const siteBaseUrl = (env.SITE_BASE_URL || "").trim();
+  if (!key || key.length < 16) {
+    throw new Error("URL_ENCRYPTION_KEY must be set and at least 16 characters");
+  }
+  if (!siteBaseUrl) {
+    throw new Error("SITE_BASE_URL is required");
+  }
+
+  const token = await encryptedResponseToken(responseId, key);
+  const petitionSlug = `petition-${token}`;
+  const petitionUrl = buildPetitionUrl(siteBaseUrl, petitionSlug);
+
+  const clientPayload = { response_id: responseId, action: "upsert" };
+  if (aiTitle && aiDraft) {
+    clientPayload.title = aiTitle;
+    clientPayload.body = aiDraft;
+  }
+  await dispatchSync(env, clientPayload);
+
+  return jsonResponse(
+    {
+      ok: true,
+      response_id: responseId,
+      petition_slug: petitionSlug,
+      petition_url: petitionUrl,
+      uses_direct_content: Boolean(aiTitle && aiDraft),
+      dispatched_event_type: (env.DISPATCH_EVENT_TYPE || "qualtrics_sync").trim()
+    },
+    200,
+    env,
+    request
+  );
+}
+
+async function handleDelete(request, env) {
+  if (!requireAuth(request, env)) {
+    return jsonResponse({ error: "Unauthorized" }, 401, env, request);
+  }
+
+  const body = await parseJsonBody(request);
+  const deleteResponseId = String(body.response_id || "").trim();
+  const deleteSlugDirect = String(body.petition_slug || "").trim();
+  const deleteSlugFromUrl = parseSlugFromPetitionUrl(body.petition_url);
+  const deleteSlug = deleteSlugDirect || deleteSlugFromUrl || "";
+
+  if (!deleteResponseId && !deleteSlug) {
+    return jsonResponse(
+      { error: "Provide at least one of response_id, petition_slug, or petition_url" },
+      400,
+      env,
+      request
+    );
+  }
+
+  if (deleteResponseId.length > 200) {
+    return jsonResponse({ error: "response_id is too long" }, 400, env, request);
+  }
+  if (deleteSlug.length > 300) {
+    return jsonResponse({ error: "petition_slug is too long" }, 400, env, request);
+  }
+
+  const payload = { action: "delete" };
+  if (deleteResponseId) payload.delete_response_id = deleteResponseId;
+  if (deleteSlug) payload.delete_slug = deleteSlug;
+  await dispatchSync(env, payload);
+
+  return jsonResponse(
+    {
+      ok: true,
+      deleted_by_response_id: deleteResponseId || null,
+      deleted_by_slug: deleteSlug || null,
+      deleted_by_url: body.petition_url || null,
+      dispatched_event_type: (env.DISPATCH_EVENT_TYPE || "qualtrics_sync").trim()
+    },
+    200,
+    env,
+    request
+  );
+}
+
+async function handleWaitUntilPosted(request, env) {
+  if (!requireAuth(request, env)) {
+    return jsonResponse({ error: "Unauthorized" }, 401, env, request);
+  }
+
+  const body = await parseJsonBody(request);
+  const petitionUrlRaw = String(body.petition_url || "").trim();
+  if (!petitionUrlRaw) {
+    return jsonResponse({ error: "Missing required field: petition_url" }, 400, env, request);
+  }
+
+  let petitionUrl;
+  try {
+    petitionUrl = new URL(petitionUrlRaw).toString();
+  } catch {
+    return jsonResponse({ error: "petition_url must be a valid URL" }, 400, env, request);
+  }
+
+  const pollIntervalMs = 10_000;
+  const maxWaitSeconds = parsePositiveInt(body.max_wait_seconds, 300);
+  const maxWaitMs = Math.min(maxWaitSeconds, 900) * 1000;
+
+  const startedAt = Date.now();
+  let attempts = 0;
+  while (true) {
+    attempts += 1;
+    const isLive = await isPetitionPosted(petitionUrl);
+    if (isLive) {
+      return jsonResponse(
+        {
+          ok: true,
+          live: true,
+          petition_url: petitionUrl,
+          attempts,
+          elapsed_seconds: Math.ceil((Date.now() - startedAt) / 1000)
+        },
+        200,
+        env,
+        request
+      );
+    }
+
+    const elapsedMs = Date.now() - startedAt;
+    if (elapsedMs >= maxWaitMs) {
+      return jsonResponse(
+        {
+          ok: true,
+          live: false,
+          petition_url: petitionUrl,
+          attempts,
+          elapsed_seconds: Math.ceil(elapsedMs / 1000)
+        },
+        200,
+        env,
+        request
+      );
+    }
+
+    await sleep(pollIntervalMs);
+  }
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") {
@@ -138,79 +361,18 @@ export default {
       return jsonResponse({ ok: true }, 200, env, request);
     }
 
-    if (request.method !== "POST" || url.pathname !== "/submit") {
-      return jsonResponse({ error: "Not found" }, 404, env, request);
-    }
-
     try {
-      const requiredAuthToken = (env.QUALTRICS_SUBMIT_TOKEN || "").trim();
-      if (!requiredAuthToken) {
-        throw new Error("QUALTRICS_SUBMIT_TOKEN is required");
+      if (request.method === "POST" && url.pathname === "/submit") {
+        return await handleSubmit(request, env);
+      }
+      if (request.method === "POST" && url.pathname === "/delete") {
+        return await handleDelete(request, env);
+      }
+      if (request.method === "POST" && url.pathname === "/wait-until-posted") {
+        return await handleWaitUntilPosted(request, env);
       }
 
-      const providedToken = parseBearerToken(request);
-      if (!providedToken || !constantTimeEqual(providedToken, requiredAuthToken)) {
-        return jsonResponse({ error: "Unauthorized" }, 401, env, request);
-      }
-
-      const body = await parseJsonBody(request);
-      const responseId = String(body.response_id || "").trim();
-      if (!responseId) {
-        return jsonResponse({ error: "Missing required field: response_id" }, 400, env, request);
-      }
-      if (responseId.length > 200) {
-        return jsonResponse({ error: "response_id is too long" }, 400, env, request);
-      }
-      const aiTitle = String(body.ai_title || "").trim();
-      const aiDraft = String(body.ai_draft || "").trim();
-      if (aiTitle.length > 300) {
-        return jsonResponse({ error: "ai_title is too long" }, 400, env, request);
-      }
-      if (aiDraft.length > 50000) {
-        return jsonResponse({ error: "ai_draft is too long" }, 400, env, request);
-      }
-      if ((aiTitle && !aiDraft) || (!aiTitle && aiDraft)) {
-        return jsonResponse(
-          { error: "ai_title and ai_draft must either both be provided or both omitted" },
-          400,
-          env,
-          request
-        );
-      }
-
-      const key = (env.URL_ENCRYPTION_KEY || "").trim();
-      const siteBaseUrl = (env.SITE_BASE_URL || "").trim();
-      if (!key || key.length < 16) {
-        throw new Error("URL_ENCRYPTION_KEY must be set and at least 16 characters");
-      }
-      if (!siteBaseUrl) {
-        throw new Error("SITE_BASE_URL is required");
-      }
-
-      const token = await encryptedResponseToken(responseId, key);
-      const petitionSlug = `petition-${token}`;
-      const petitionUrl = buildPetitionUrl(siteBaseUrl, petitionSlug);
-
-      const clientPayload = { response_id: responseId };
-      if (aiTitle && aiDraft) {
-        clientPayload.title = aiTitle;
-        clientPayload.body = aiDraft;
-      }
-      await dispatchSync(env, clientPayload);
-
-      return jsonResponse(
-        {
-          ok: true,
-          response_id: responseId,
-          petition_slug: petitionSlug,
-          petition_url: petitionUrl,
-          uses_direct_content: Boolean(aiTitle && aiDraft),
-          dispatched_event_type: (env.DISPATCH_EVENT_TYPE || "qualtrics_sync").trim()
-        },
-        200,
-        env,
-        request
-      );
+      return jsonResponse({ error: "Not found" }, 404, env, request);
     } catch (err) {
       console.error("qualtrics-submit-api error", err);
       const generic = { error: "Internal server error" };
