@@ -50,6 +50,9 @@ def yaml_quote(value: str) -> str:
 def normalize_body(value: str) -> str:
     value = value.replace("\r\n", "\n").replace("\r", "\n")
     value = html.unescape(value)
+    # Repair common malformed paragraph tags from model output, e.g. "<pText..."
+    value = re.sub(r"(?is)<\s*p(?![\s>/])", "", value)
+    value = re.sub(r"(?is)<\s*/\s*p(?!\s*>)", "", value)
     value = re.sub(r"(?is)<\s*br\s*/?\s*>", "\n", value)
     value = re.sub(r"(?is)<\s*/\s*p\s*>", "\n\n", value)
     value = re.sub(r"(?is)<\s*p(?:\s+[^>]*)?>", "", value)
@@ -115,7 +118,7 @@ def encrypted_response_token(response_id: str, key: str) -> str:
         response_id.encode("utf-8"),
         hashlib.sha256,
     ).digest()
-    return base64.urlsafe_b64encode(digest[:15]).decode("ascii").rstrip("=")
+    return base64.urlsafe_b64encode(digest[:15]).decode("ascii").rstrip("=").lower()
 
 
 def choose_petition_path(response_id: str, key: str, current_path: Optional[Path] = None) -> Path:
