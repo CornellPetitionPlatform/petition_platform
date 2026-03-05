@@ -40,9 +40,12 @@ jobs:
           QUALTRICS_PUBLISHED_COLUMN: ${{ secrets.QUALTRICS_PUBLISHED_COLUMN }}
           QUALTRICS_PUBLISHED_VALUE: ${{ secrets.QUALTRICS_PUBLISHED_VALUE }}
           QUALTRICS_RECORDED_DATE_COLUMN: ${{ secrets.QUALTRICS_RECORDED_DATE_COLUMN }}
+          QUALTRICS_ACTION: ${{ github.event.client_payload.action || '' }}
           QUALTRICS_TARGET_RESPONSE_ID: ${{ github.event.client_payload.response_id || '' }}
           QUALTRICS_TARGET_TITLE: ${{ github.event.client_payload.title || '' }}
           QUALTRICS_TARGET_BODY: ${{ github.event.client_payload.body || '' }}
+          QUALTRICS_DELETE_RESPONSE_ID: ${{ github.event.client_payload.delete_response_id || '' }}
+          QUALTRICS_DELETE_SLUG: ${{ github.event.client_payload.delete_slug || '' }}
         run: python scripts/sync_qualtrics_petitions.py
 
       - name: Create or update pull request
@@ -114,7 +117,7 @@ jobs:
               body: "Auto-approved by Qualtrics sync reviewer bot."
             });
 
-      - name: Enable auto-merge
+      - name: Merge pull request
         if: steps.create_pr.outputs.pull-request-number != ''
         env:
           GH_TOKEN: ${{ secrets.QUALTRICS_PR_BOT_TOKEN != '' && secrets.QUALTRICS_PR_BOT_TOKEN || github.token }}
@@ -122,4 +125,21 @@ jobs:
           PR_NUMBER: ${{ steps.create_pr.outputs.pull-request-number }}
         run: |
           set -euo pipefail
-          gh pr merge "$PR_NUMBER" --repo "$REPO" --auto --squash
+          set +e
+          merge_output="$(gh pr merge "$PR_NUMBER" --repo "$REPO" --auto --squash 2>&1)"
+          merge_status=$?
+          set -e
+
+          if [ "$merge_status" -eq 0 ]; then
+            echo "$merge_output"
+            exit 0
+          fi
+
+          echo "$merge_output"
+          if printf '%s' "$merge_output" | grep -q "enablePullRequestAutoMerge"; then
+            echo "::warning::Auto-merge is not enabled for the target branch; falling back to direct squash merge."
+            gh pr merge "$PR_NUMBER" --repo "$REPO" --squash
+          else
+            echo "::error::Failed to merge pull request."
+            exit "$merge_status"
+          fi

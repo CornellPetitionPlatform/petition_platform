@@ -33,8 +33,11 @@ Workflow: `.github/workflows/qualtrics-sync.yml`
 
 ## Optional runtime env
 
+- `QUALTRICS_ACTION`: `upsert` (default) or `delete`.
 - `QUALTRICS_TARGET_RESPONSE_ID`: when set, the sync run only processes that response ID.
 - `QUALTRICS_TARGET_TITLE` + `QUALTRICS_TARGET_BODY`: when both are set with `QUALTRICS_TARGET_RESPONSE_ID`, sync uses these direct values for the petition content instead of pulling title/body from the CSV export.
+- `QUALTRICS_DELETE_RESPONSE_ID`: response ID to delete when `QUALTRICS_ACTION=delete`.
+- `QUALTRICS_DELETE_SLUG`: slug to delete when `QUALTRICS_ACTION=delete`.
 
 ## Privacy behavior
 
@@ -112,6 +115,44 @@ Content-Type: application/json
 
 This API dispatches the same `qualtrics_sync` workflow and returns the deterministic petition URL immediately.  
 When `ai_title` and `ai_draft` are provided, those values are used as the petition content for that response ID.
+
+## Wait-until-live API
+
+To check if a petition URL is live yet, and retry every 10 seconds until posted:
+
+```http
+POST https://<your-worker>.workers.dev/wait-until-posted
+Authorization: Bearer <QUALTRICS_SUBMIT_TOKEN>
+Content-Type: application/json
+
+{
+  "petition_url":"${e://Field/petition_url}",
+  "max_wait_seconds":300
+}
+```
+
+Response includes `live: true` when posted, otherwise `live: false` after timeout.
+
+## Delete API
+
+To delete a petition (specific URL or from list/home contexts), call:
+
+```http
+POST https://<your-worker>.workers.dev/delete
+Authorization: Bearer <QUALTRICS_SUBMIT_TOKEN>
+Content-Type: application/json
+
+{
+  "petition_url":"https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-abcDEF.../"
+}
+```
+
+You can also pass:
+
+- `petition_slug`
+- `response_id`
+
+The delete endpoint dispatches a sync run with `action=delete`, which removes matching `_petitions/*.md` files.
 
 ## Branch protection mode
 

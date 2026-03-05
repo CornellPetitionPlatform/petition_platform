@@ -6,11 +6,13 @@ from __future__ import annotations
 import argparse
 import base64
 import csv
+import html
 import hashlib
 import hmac
 import io
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -47,6 +49,11 @@ def yaml_quote(value: str) -> str:
 
 def normalize_body(value: str) -> str:
     value = value.replace("\r\n", "\n").replace("\r", "\n")
+    value = html.unescape(value)
+    value = re.sub(r"(?is)<\s*br\s*/?\s*>", "\n", value)
+    value = re.sub(r"(?is)<\s*/\s*p\s*>", "\n\n", value)
+    value = re.sub(r"(?is)<\s*p(?:\s+[^>]*)?>", "", value)
+    value = re.sub(r"\n{3,}", "\n\n", value)
     return value.strip()
 
 
@@ -136,9 +143,12 @@ class QualtricsConfig:
     published_value: str
     recorded_date_column: str
     url_encryption_key: str
+    action: str
     target_response_id: str
     target_title: str
     target_body: str
+    delete_response_id: str
+    delete_slug: str
     poll_interval_seconds: float
     poll_timeout_seconds: float
 
@@ -164,9 +174,12 @@ def load_config() -> QualtricsConfig:
         published_value=env_optional("QUALTRICS_PUBLISHED_VALUE", "1"),
         recorded_date_column=env_optional("QUALTRICS_RECORDED_DATE_COLUMN", "RecordedDate"),
         url_encryption_key=env_required("QUALTRICS_URL_ENCRYPTION_KEY"),
+        action=env_optional("QUALTRICS_ACTION", "upsert"),
         target_response_id=env_optional("QUALTRICS_TARGET_RESPONSE_ID", ""),
         target_title=env_optional("QUALTRICS_TARGET_TITLE", ""),
         target_body=env_optional("QUALTRICS_TARGET_BODY", ""),
+        delete_response_id=env_optional("QUALTRICS_DELETE_RESPONSE_ID", ""),
+        delete_slug=env_optional("QUALTRICS_DELETE_SLUG", ""),
         poll_interval_seconds=float(env_optional("QUALTRICS_POLL_INTERVAL_SECONDS", "2")),
         poll_timeout_seconds=float(env_optional("QUALTRICS_POLL_TIMEOUT_SECONDS", "180")),
     )
@@ -178,8 +191,13 @@ def load_config() -> QualtricsConfig:
         cfg.published_column = "Finished"
     if not cfg.published_value:
         cfg.published_value = "1"
+    cfg.action = cfg.action.strip().lower() or "upsert"
+    if cfg.action not in {"upsert", "delete"}:
+        raise RuntimeError("QUALTRICS_ACTION must be either 'upsert' or 'delete'")
     if (cfg.target_title and not cfg.target_body) or (cfg.target_body and not cfg.target_title):
         raise RuntimeError("QUALTRICS_TARGET_TITLE and QUALTRICS_TARGET_BODY must both be set together")
+    if cfg.action == "delete" and not cfg.delete_response_id and not cfg.delete_slug and not cfg.target_response_id:
+        raise RuntimeError("Delete action requires QUALTRICS_DELETE_RESPONSE_ID, QUALTRICS_DELETE_SLUG, or QUALTRICS_TARGET_RESPONSE_ID")
     return cfg
 
 
@@ -373,6 +391,48 @@ def sync_rows(rows: List[PetitionRow], cfg: QualtricsConfig, dry_run: bool) -> T
     return created, updated, skipped
 
 
+def delete_rows(cfg: QualtricsConfig, dry_run: bool) -> Tuple[int, int]:
+    existing_by_response = scan_existing_petitions()
+    deleted = 0
+    skipped = 0
+
+    delete_response_id = cfg.delete_response_id.strip() or cfg.target_response_id.strip()
+    delete_slug = cfg.delete_slug.strip().removesuffix(".md")
+
+    candidates: List[Path] = []
+    if delete_response_id:
+        by_response = existing_by_response.get(delete_response_id)
+        if by_response is not None:
+            candidates.append(by_response)
+
+    if delete_slug:
+        slug_path = PETITIONS_DIR / f"{delete_slug}.md"
+        if slug_path.exists():
+            candidates.append(slug_path)
+
+    seen: set[Path] = set()
+    unique_candidates: List[Path] = []
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        unique_candidates.append(candidate)
+
+    if not unique_candidates:
+        return 0, 1
+
+    for path in unique_candidates:
+        if not path.exists():
+            skipped += 1
+            continue
+        if not dry_run:
+            path.unlink()
+        deleted += 1
+
+    return deleted, skipped
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Sync Qualtrics responses into _petitions")
     parser.add_argument("--dry-run", action="store_true", help="Do not write files")
@@ -384,6 +444,15 @@ def main() -> int:
 
     try:
         cfg = load_config()
+        if cfg.action == "delete":
+            deleted, skipped = delete_rows(cfg, args.dry_run)
+            action = "would be " if args.dry_run else ""
+            print(
+                f"Delete complete: {action}deleted {deleted}, skipped {skipped}, "
+                f"delete_response_id={cfg.delete_response_id or cfg.target_response_id}, delete_slug={cfg.delete_slug}"
+            )
+            return 0
+
         if cfg.target_response_id and cfg.target_title and cfg.target_body:
             rows = [
                 PetitionRow(
