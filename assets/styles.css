@@ -109,6 +109,15 @@ body {
   margin-bottom: 1.25rem;
 }
 
+.prose p {
+  margin: 0 0 1rem;
+  opacity: 1;
+}
+
+.prose p:last-child {
+  margin-bottom: 0;
+}
+
 .share-panel {
   border: 1px solid #d4d0dd;
   border-radius: 16px;
