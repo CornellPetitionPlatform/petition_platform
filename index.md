@@ -10,7 +10,13 @@ layout: default
 </section>
 
 <section class="petition-list">
-  {% for p in site.petitions %}
+  {% assign petitions_with_posted_at = site.petitions | where_exp: "p", "p.posted_at != blank" | sort: "posted_at" | reverse %}
+  {% assign petitions_with_date = site.petitions | where_exp: "p", "p.posted_at == blank and p.date != blank" | sort: "date" | reverse %}
+  {% assign petitions_with_recorded_date = site.petitions | where_exp: "p", "p.posted_at == blank and p.date == blank and p.qualtrics_recorded_date != blank" | sort: "qualtrics_recorded_date" | reverse %}
+  {% assign petitions_without_dates = site.petitions | where_exp: "p", "p.posted_at == blank and p.date == blank and p.qualtrics_recorded_date == blank" %}
+  {% assign petitions_sorted = petitions_with_posted_at | concat: petitions_with_date | concat: petitions_with_recorded_date | concat: petitions_without_dates %}
+
+  {% for p in petitions_sorted %}
     <a class="petition-card" href="{{ p.url | relative_url }}">
       <div class="petition-card__body">
         <h3 class="petition-card__title">{{ p.title }}</h3>
@@ -22,4 +28,3 @@ layout: default
     </a>
   {% endfor %}
 </section>
-

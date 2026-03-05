@@ -2,7 +2,7 @@
 layout: petition
 title: "Rethink Loyalty: Elevate Cats as \"Man's Best Friend\""
 qualtrics_response_id: "R_7IaPtyH3fD1KUrD"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-04"
 source: qualtrics
 ---
 The title of "man's best friend" has long been associated with dogs, yet countless individuals find their deepest companionship and support in cats. These remarkable animals bring joy, comfort, and unconditional love to our lives, deserving recognition for their unique bond with humans. 

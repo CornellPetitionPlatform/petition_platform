@@ -2,7 +2,7 @@
 layout: petition
 title: "Establish a Bring-Your-Cat-to-Work Day for a Feline-Friendly Workplace!"
 qualtrics_response_id: "R_7mJDOIICXEMCdfV"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-04"
 source: qualtrics
 ---
 Incorporating a "Bring-Your-Cat-to-Work Day" can greatly enhance workplace morale and foster a more relaxed environment. Many studies show that having pets around reduces stress and increases productivity, creating a happier and healthier work atmosphere. Cats, with their calming presence and playful antics, can boost employee satisfaction and well-being.
