@@ -105,6 +105,10 @@ body {
   margin: 0 0 1rem;
 }
 
+.prose {
+  margin-bottom: 1.25rem;
+}
+
 .share-panel {
   border: 1px solid #d4d0dd;
   border-radius: 16px;
