@@ -19,6 +19,7 @@ import urllib.error
 import urllib.request
 import zipfile
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -57,7 +58,18 @@ def normalize_body(value: str) -> str:
     value = re.sub(r"(?is)<\s*/\s*p\s*>", "\n\n", value)
     value = re.sub(r"(?is)<\s*p(?:\s+[^>]*)?>", "", value)
     value = re.sub(r"\n{3,}", "\n\n", value)
+    if "\n" in value and "\n\n" not in value:
+        lines = [line.strip() for line in value.split("\n") if line.strip()]
+        value = "\n\n".join(lines)
     return value.strip()
+
+
+def compute_posted_at(recorded_date: str, existing_posted_at: Optional[str]) -> str:
+    if existing_posted_at:
+        return existing_posted_at.strip()
+    if recorded_date.strip():
+        return recorded_date.strip()
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
 def parse_bool_token(value: str) -> Optional[bool]:
@@ -329,6 +341,7 @@ def render_markdown(
     body: str,
     response_id: str,
     recorded_date: str,
+    posted_at: str,
 ) -> str:
     front = [
         "---",
@@ -336,6 +349,7 @@ def render_markdown(
         f"title: {yaml_quote(title)}",
         f'qualtrics_response_id: "{response_id}"',
         f'qualtrics_recorded_date: "{recorded_date}"',
+        f'posted_at: "{posted_at}"',
         "source: qualtrics",
         "---",
         "",
@@ -374,7 +388,10 @@ def sync_rows(rows: List[PetitionRow], cfg: QualtricsConfig, dry_run: bool) -> T
         if moved and not dry_run:
             current.rename(target)
 
-        markdown = render_markdown(title, body, response_id, recorded_date)
+        existing_path = current if current is not None else target
+        existing_posted_at = read_front_matter_value(existing_path, "posted_at") if existing_path.exists() else None
+        posted_at = compute_posted_at(recorded_date, existing_posted_at)
+        markdown = render_markdown(title, body, response_id, recorded_date, posted_at)
         baseline = current if moved and dry_run and current is not None else target
         already = baseline.read_text(encoding="utf-8") if baseline.exists() else None
         if already == markdown and not moved:
