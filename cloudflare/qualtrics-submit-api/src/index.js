@@ -78,6 +78,14 @@ function buildPetitionUrl(siteBaseUrl, slug) {
   return `${normalizeBaseUrl(siteBaseUrl)}/petitions/${slug}/`;
 }
 
+function slugify(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function parsePositiveInt(value, fallback) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
@@ -217,7 +225,7 @@ async function handleSubmit(request, env) {
   }
 
   const token = await encryptedResponseToken(responseId, key);
-  const petitionSlug = `petition-${token}`;
+  const petitionSlug = slugify(`petition-${token}`);
   const petitionUrl = buildPetitionUrl(siteBaseUrl, petitionSlug);
 
   const clientPayload = { response_id: responseId, action: "upsert" };

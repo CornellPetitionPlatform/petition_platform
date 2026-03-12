@@ -36,12 +36,14 @@ Response:
 {
   "ok": true,
   "response_id": "R_abc123...",
-  "petition_slug": "petition-abcDEF...",
-  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-abcDEF.../",
+  "petition_slug": "petition-abcdef...",
+  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-abcdef.../",
   "uses_direct_content": true,
   "dispatched_event_type": "qualtrics_sync"
 }
 ```
+
+Note: `petition_slug` and `petition_url` are slugified (lowercased; underscores become hyphens) to match the published URL.
 
 ### `POST /wait-until-posted`
 
@@ -51,7 +53,7 @@ Body:
 
 ```json
 {
-  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-abcDEF.../",
+  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-abcdef.../",
   "max_wait_seconds": 300
 }
 ```
@@ -96,13 +98,13 @@ Body examples:
 
 ```json
 {
-  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-abcDEF.../"
+  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-abcdef.../"
 }
 ```
 
 ```json
 {
-  "petition_slug": "petition-abcDEF..."
+  "petition_slug": "petition-abcdef..."
 }
 ```
 
@@ -118,7 +120,7 @@ Response:
 {
   "ok": true,
   "deleted_by_response_id": "R_abc123...",
-  "deleted_by_slug": "petition-abcDEF...",
+  "deleted_by_slug": "petition-abcdef...",
   "deleted_by_url": "https://...",
   "dispatched_event_type": "qualtrics_sync"
 }
