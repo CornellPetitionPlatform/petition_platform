@@ -306,7 +306,7 @@ async function handleWaitUntilPosted(request, env) {
     return jsonResponse({ error: "petition_url must be a valid URL" }, 400, env, request);
   }
 
-  const pollIntervalMs = 10_000;
+  const pollIntervalMs = 1_000;
   const maxWaitSeconds = parsePositiveInt(body.max_wait_seconds, 300);
   const maxWaitMs = Math.min(maxWaitSeconds, 900) * 1000;
 
