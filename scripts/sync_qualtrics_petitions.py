@@ -133,9 +133,15 @@ def encrypted_response_token(response_id: str, key: str) -> str:
     return base64.urlsafe_b64encode(digest[:15]).decode("ascii").rstrip("=").lower()
 
 
+def slugify(value: str) -> str:
+    value = value.strip().lower()
+    value = re.sub(r"[^a-z0-9]+", "-", value)
+    return value.strip("-")
+
+
 def choose_petition_path(response_id: str, key: str, current_path: Optional[Path] = None) -> Path:
     current_resolved = current_path.resolve() if current_path is not None else None
-    base = f"petition-{encrypted_response_token(response_id, key)}"
+    base = slugify(f"petition-{encrypted_response_token(response_id, key)}")
     candidate = PETITIONS_DIR / f"{base}.md"
     counter = 2
     while candidate.exists():
