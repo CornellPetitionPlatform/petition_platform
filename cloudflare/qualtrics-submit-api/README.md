@@ -4,7 +4,7 @@ This Worker accepts survey completion requests, dispatches your `qualtrics_sync`
 
 It also supports:
 
-- waiting until a petition URL is live (checks every 10 seconds)
+- waiting until a petition URL is live (checks every 1 second)
 - deleting a petition by URL, slug, or response ID
 
 ## Authentication
@@ -45,7 +45,7 @@ Response:
 
 ### `POST /wait-until-posted`
 
-Checks whether a petition URL is live. If not yet live, retries every 10 seconds until posted or timeout.
+Checks whether a petition URL is live. If not yet live, retries every 1 second until posted or timeout.
 
 Body:
 
