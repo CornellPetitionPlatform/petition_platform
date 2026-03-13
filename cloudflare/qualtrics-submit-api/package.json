@@ -1,0 +1,5 @@
+{
+  "name": "qualtrics-submit-api",
+  "private": true,
+  "type": "module"
+}
