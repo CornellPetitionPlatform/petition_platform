@@ -75,15 +75,15 @@ jobs:
           git commit -m "$TITLE"
           git push --force origin "$BRANCH"
 
-          pr_number="$(gh pr list --repo "$REPO" --head "$BRANCH" --base "$BASE_BRANCH" --json number --jq '.[0].number' || true)"
+          pr_number="$(gh pr view "$BRANCH" --repo "$REPO" --json number --jq '.number' 2>/dev/null || true)"
           if [ -z "$pr_number" ] || [ "$pr_number" = "null" ]; then
             gh pr create \
               --repo "$REPO" \
               --base "$BASE_BRANCH" \
               --head "$BRANCH" \
               --title "$TITLE" \
-              --body "$BODY" || true
-            pr_number="$(gh pr list --repo "$REPO" --head "$BRANCH" --base "$BASE_BRANCH" --json number --jq '.[0].number' || true)"
+              --body "$BODY"
+            pr_number="$(gh pr view "$BRANCH" --repo "$REPO" --json number --jq '.number')"
           else
             gh pr edit "$pr_number" \
               --repo "$REPO" \
@@ -96,7 +96,7 @@ jobs:
             exit 1
           fi
 
-          pr_url="$(gh pr view "$pr_number" --repo "$REPO" --json url --jq '.url')"
+          pr_url="$(gh pr view "$BRANCH" --repo "$REPO" --json url --jq '.url')"
           echo "Pull request URL: $pr_url"
           echo "pull-request-number=$pr_number" >> "$GITHUB_OUTPUT"
 
