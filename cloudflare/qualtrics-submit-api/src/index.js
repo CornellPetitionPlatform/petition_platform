@@ -122,6 +122,23 @@ function normalizePetitionUrl(rawUrl) {
   return parsed.toString();
 }
 
+function normalizePetitionUrl(rawUrl) {
+  let parsed;
+  try {
+    parsed = new URL(String(rawUrl || "").trim());
+  } catch {
+    return null;
+  }
+  const match = parsed.pathname.match(/^(.*\/petitions\/)([A-Za-z0-9_-]+)(\/?)$/);
+  if (!match) return parsed.toString();
+  const normalizedSlug = normalizeSlug(match[2]);
+  if (!normalizedSlug) return parsed.toString();
+  const normalizedPath = `${match[1]}${normalizedSlug}/`;
+  if (normalizedPath === parsed.pathname) return parsed.toString();
+  parsed.pathname = normalizedPath;
+  return parsed.toString();
+}
+
 function parseSlugFromPetitionUrl(rawUrl) {
   let parsed;
   try {
@@ -131,6 +148,7 @@ function parseSlugFromPetitionUrl(rawUrl) {
   }
   const match = parsed.pathname.match(/\/petitions\/([A-Za-z0-9_-]+)\/?$/);
   if (!match) return null;
+  return normalizeSlug(match[1]);
   return normalizeSlug(match[1]);
 }
 
@@ -292,6 +310,7 @@ async function handleDelete(request, env) {
   const body = await parseJsonBody(request);
   const deleteResponseId = String(body.response_id || "").trim();
   const deleteSlugDirect = normalizeSlug(String(body.petition_slug || ""));
+  const deleteSlugDirect = normalizeSlug(String(body.petition_slug || ""));
   const deleteSlugFromUrl = parseSlugFromPetitionUrl(body.petition_url);
   const deleteSlug = deleteSlugDirect || deleteSlugFromUrl || "";
 
@@ -343,8 +362,11 @@ async function handleWaitUntilPosted(request, env) {
 
   const normalizedUrl = normalizePetitionUrl(petitionUrlRaw);
   if (!normalizedUrl) {
+  const normalizedUrl = normalizePetitionUrl(petitionUrlRaw);
+  if (!normalizedUrl) {
     return jsonResponse({ error: "petition_url must be a valid URL" }, 400, env, request);
   }
+  const petitionUrl = normalizedUrl;
   const petitionUrl = normalizedUrl;
 
   const pollIntervalMs = 1_000;
@@ -390,6 +412,8 @@ async function handleWaitUntilPosted(request, env) {
     await sleep(pollIntervalMs);
   }
 }
+
+export { normalizeSlug, normalizePetitionUrl, parseSlugFromPetitionUrl, slugify };
 
 export { normalizeSlug, normalizePetitionUrl, parseSlugFromPetitionUrl, slugify };
 
