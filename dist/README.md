@@ -1,0 +1,1 @@
+This folder contains the built output assets for the worker "petition-platform" generated at 2026-03-18T18:57:32.383Z.
