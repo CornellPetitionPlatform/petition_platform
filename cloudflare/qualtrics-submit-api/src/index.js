@@ -82,12 +82,7 @@ function slugify(value) {
   return String(value || "")
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function normalizeSlug(value) {
-  return slugify(value).replace(/_+/g, "-");
+    .replace(/[^a-z0-9]+/g, "");
 }
 
 function parsePositiveInt(value, fallback) {
@@ -111,7 +106,7 @@ function normalizePetitionUrl(rawUrl) {
   }
   const match = parsed.pathname.match(/^(.*\/petitions\/)([A-Za-z0-9_-]+)(\/?)$/);
   if (!match) return parsed.toString();
-  const normalizedSlug = normalizeSlug(match[2]);
+  const normalizedSlug = slugify(match[2]);
   if (!normalizedSlug) return parsed.toString();
   const normalizedPath = `${match[1]}${normalizedSlug}/`;
   if (normalizedPath === parsed.pathname) return parsed.toString();
@@ -128,7 +123,7 @@ function parseSlugFromPetitionUrl(rawUrl) {
   }
   const match = parsed.pathname.match(/\/petitions\/([A-Za-z0-9_-]+)\/?$/);
   if (!match) return null;
-  return normalizeSlug(match[1]);
+  return slugify(match[1]);
 }
 
 async function encryptedResponseToken(responseId, key) {
@@ -145,6 +140,16 @@ async function encryptedResponseToken(responseId, key) {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "").toLowerCase();
+}
+
+async function buildPetitionSlugFromResponseId(responseId, key) {
+  const token = await encryptedResponseToken(responseId, key);
+  return slugify(token);
+}
+
+async function buildPetitionLocationFromResponseId(responseId, key, siteBaseUrl) {
+  const slug = await buildPetitionSlugFromResponseId(responseId, key);
+  return { slug, url: buildPetitionUrl(siteBaseUrl, slug) };
 }
 
 function requireAuth(request, env) {
@@ -245,9 +250,9 @@ async function handleSubmit(request, env) {
     throw new Error("SITE_BASE_URL is required");
   }
 
-  const token = await encryptedResponseToken(responseId, key);
-  const petitionSlug = normalizeSlug(`petition-${token}`);
-  const petitionUrl = buildPetitionUrl(siteBaseUrl, petitionSlug);
+  const petitionLocation = await buildPetitionLocationFromResponseId(responseId, key, siteBaseUrl);
+  const petitionSlug = petitionLocation.slug;
+  const petitionUrl = petitionLocation.url;
 
   const clientPayload = { response_id: responseId, action: "upsert" };
   if (aiTitle && aiDraft) {
@@ -278,7 +283,7 @@ async function handleDelete(request, env) {
 
   const body = await parseJsonBody(request);
   const deleteResponseId = String(body.response_id || "").trim();
-  const deleteSlugDirect = normalizeSlug(String(body.petition_slug || ""));
+  const deleteSlugDirect = slugify(String(body.petition_slug || ""));
   const deleteSlugFromUrl = parseSlugFromPetitionUrl(body.petition_url);
   const deleteSlug = deleteSlugDirect || deleteSlugFromUrl || "";
 
@@ -378,7 +383,7 @@ async function handleWaitUntilPosted(request, env) {
   }
 }
 
-export { normalizeSlug, normalizePetitionUrl, parseSlugFromPetitionUrl, slugify };
+export { normalizePetitionUrl, parseSlugFromPetitionUrl, slugify };
 
 export default {
   async fetch(request, env) {
