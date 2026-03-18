@@ -36,14 +36,14 @@ Response:
 {
   "ok": true,
   "response_id": "R_abc123...",
-  "petition_slug": "petition-abcdef...",
-  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-abcdef.../",
+  "petition_slug": "petitionabcdef...",
+  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petitionabcdef.../",
   "uses_direct_content": true,
   "dispatched_event_type": "qualtrics_sync"
 }
 ```
 
-Note: `petition_slug` and `petition_url` are slugified (lowercased; underscores become hyphens) to match the published URL.
+Note: `petition_slug` and `petition_url` are slugified (lowercased; non-alphanumerics removed) for new petitions. Legacy underscores/hyphens are preserved for existing URLs.
 
 ### `POST /wait-until-posted`
 
@@ -53,7 +53,7 @@ Body:
 
 ```json
 {
-  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-abcdef.../",
+  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petitionabcdef.../",
   "max_wait_seconds": 300
 }
 ```
@@ -98,13 +98,13 @@ Body examples:
 
 ```json
 {
-  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-abcdef.../"
+  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petitionabcdef.../"
 }
 ```
 
 ```json
 {
-  "petition_slug": "petition-abcdef..."
+  "petition_slug": "petitionabcdef..."
 }
 ```
 
@@ -120,7 +120,7 @@ Response:
 {
   "ok": true,
   "deleted_by_response_id": "R_abc123...",
-  "deleted_by_slug": "petition-abcdef...",
+  "deleted_by_slug": "petitionabcdef...",
   "deleted_by_url": "https://...",
   "dispatched_event_type": "qualtrics_sync"
 }

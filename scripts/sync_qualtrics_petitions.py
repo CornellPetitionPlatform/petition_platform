@@ -135,19 +135,25 @@ def encrypted_response_token(response_id: str, key: str) -> str:
 
 def slugify(value: str) -> str:
     value = value.strip().lower()
-    value = re.sub(r"[^a-z0-9]+", "-", value)
-    return value.strip("-")
+    return re.sub(r"[^a-z0-9]+", "", value)
+
+
+def petition_slug_from_response_id(response_id: str, key: str) -> str:
+    token = encrypted_response_token(response_id, key)
+    return slugify(f"petition-{token}")
 
 
 def choose_petition_path(response_id: str, key: str, current_path: Optional[Path] = None) -> Path:
+    if current_path is not None and current_path.exists():
+        return current_path
     current_resolved = current_path.resolve() if current_path is not None else None
-    base = slugify(f"petition-{encrypted_response_token(response_id, key)}")
+    base = petition_slug_from_response_id(response_id, key)
     candidate = PETITIONS_DIR / f"{base}.md"
     counter = 2
     while candidate.exists():
         if current_resolved is not None and candidate.resolve() == current_resolved:
             break
-        candidate = PETITIONS_DIR / f"{base}-{counter}.md"
+        candidate = PETITIONS_DIR / f"{base}{counter}.md"
         counter += 1
     return candidate
 

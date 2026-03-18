@@ -4,29 +4,37 @@ import test from "node:test";
 import {
   normalizePetitionUrl,
   normalizeSlug,
-  parseSlugFromPetitionUrl
+  parseSlugFromPetitionUrl,
+  slugify
 } from "../src/index.js";
 
-test("normalizeSlug replaces underscores with hyphens", () => {
+test("slugify removes non-alphanumerics", () => {
   assert.equal(
-    normalizeSlug("petition-kd_fppftdeepv9cbcvxb"),
-    "petition-kd-fppftdeepv9cbcvxb"
+    slugify("petition-kd_fppftdeepv9cbcvxb"),
+    "petitionkdfppftdeepv9cbcvxb"
   );
 });
 
-test("parseSlugFromPetitionUrl normalizes underscored slugs", () => {
+test("normalizeSlug preserves underscores in slugs", () => {
+  assert.equal(
+    normalizeSlug("petition-kd_fppftdeepv9cbcvxb"),
+    "petition-kd_fppftdeepv9cbcvxb"
+  );
+});
+
+test("parseSlugFromPetitionUrl preserves underscored slugs", () => {
   const slug = parseSlugFromPetitionUrl(
     "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-kd_fppftdeepv9cbcvxb/"
   );
-  assert.equal(slug, "petition-kd-fppftdeepv9cbcvxb");
+  assert.equal(slug, "petition-kd_fppftdeepv9cbcvxb");
 });
 
-test("normalizePetitionUrl rewrites underscored slugs in path", () => {
+test("normalizePetitionUrl preserves underscored slugs in path", () => {
   const normalized = normalizePetitionUrl(
     "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-kd_fppftdeepv9cbcvxb/"
   );
   assert.equal(
     normalized,
-    "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-kd-fppftdeepv9cbcvxb/"
+    "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-kd_fppftdeepv9cbcvxb/"
   );
 });
