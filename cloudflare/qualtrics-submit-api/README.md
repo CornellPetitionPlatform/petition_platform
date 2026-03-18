@@ -43,7 +43,7 @@ Response:
 }
 ```
 
-Note: `petition_slug` and `petition_url` are slugified (lowercased; non-alphanumerics removed) for new petitions. Legacy underscores/hyphens are preserved for existing URLs.
+Note: `petition_slug` and `petition_url` are canonicalized (lowercased; non-alphanumerics removed) for new petitions and for any URL/slug inputs. Underscores and hyphens are stripped.
 
 ### `POST /wait-until-posted`
 

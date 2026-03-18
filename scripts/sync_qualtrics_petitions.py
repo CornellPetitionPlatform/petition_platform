@@ -140,7 +140,7 @@ def slugify(value: str) -> str:
 
 def petition_slug_from_response_id(response_id: str, key: str) -> str:
     token = encrypted_response_token(response_id, key)
-    return slugify(f"petition-{token}")
+    return slugify(token)
 
 
 def choose_petition_path(response_id: str, key: str, current_path: Optional[Path] = None) -> Path:

@@ -85,14 +85,6 @@ function slugify(value) {
     .replace(/[^a-z0-9]+/g, "");
 }
 
-function normalizeSlug(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]+/g, "")
-    .replace(/^[-_]+|[-_]+$/g, "");
-}
-
 function parsePositiveInt(value, fallback) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
@@ -114,24 +106,7 @@ function normalizePetitionUrl(rawUrl) {
   }
   const match = parsed.pathname.match(/^(.*\/petitions\/)([A-Za-z0-9_-]+)(\/?)$/);
   if (!match) return parsed.toString();
-  const normalizedSlug = normalizeSlug(match[2]);
-  if (!normalizedSlug) return parsed.toString();
-  const normalizedPath = `${match[1]}${normalizedSlug}/`;
-  if (normalizedPath === parsed.pathname) return parsed.toString();
-  parsed.pathname = normalizedPath;
-  return parsed.toString();
-}
-
-function normalizePetitionUrl(rawUrl) {
-  let parsed;
-  try {
-    parsed = new URL(String(rawUrl || "").trim());
-  } catch {
-    return null;
-  }
-  const match = parsed.pathname.match(/^(.*\/petitions\/)([A-Za-z0-9_-]+)(\/?)$/);
-  if (!match) return parsed.toString();
-  const normalizedSlug = normalizeSlug(match[2]);
+  const normalizedSlug = slugify(match[2]);
   if (!normalizedSlug) return parsed.toString();
   const normalizedPath = `${match[1]}${normalizedSlug}/`;
   if (normalizedPath === parsed.pathname) return parsed.toString();
@@ -148,8 +123,7 @@ function parseSlugFromPetitionUrl(rawUrl) {
   }
   const match = parsed.pathname.match(/\/petitions\/([A-Za-z0-9_-]+)\/?$/);
   if (!match) return null;
-  return normalizeSlug(match[1]);
-  return normalizeSlug(match[1]);
+  return slugify(match[1]);
 }
 
 async function encryptedResponseToken(responseId, key) {
@@ -170,7 +144,7 @@ async function encryptedResponseToken(responseId, key) {
 
 async function buildPetitionSlugFromResponseId(responseId, key) {
   const token = await encryptedResponseToken(responseId, key);
-  return slugify(`petition-${token}`);
+  return slugify(token);
 }
 
 async function buildPetitionLocationFromResponseId(responseId, key, siteBaseUrl) {
@@ -309,8 +283,7 @@ async function handleDelete(request, env) {
 
   const body = await parseJsonBody(request);
   const deleteResponseId = String(body.response_id || "").trim();
-  const deleteSlugDirect = normalizeSlug(String(body.petition_slug || ""));
-  const deleteSlugDirect = normalizeSlug(String(body.petition_slug || ""));
+  const deleteSlugDirect = slugify(String(body.petition_slug || ""));
   const deleteSlugFromUrl = parseSlugFromPetitionUrl(body.petition_url);
   const deleteSlug = deleteSlugDirect || deleteSlugFromUrl || "";
 
@@ -362,11 +335,8 @@ async function handleWaitUntilPosted(request, env) {
 
   const normalizedUrl = normalizePetitionUrl(petitionUrlRaw);
   if (!normalizedUrl) {
-  const normalizedUrl = normalizePetitionUrl(petitionUrlRaw);
-  if (!normalizedUrl) {
     return jsonResponse({ error: "petition_url must be a valid URL" }, 400, env, request);
   }
-  const petitionUrl = normalizedUrl;
   const petitionUrl = normalizedUrl;
 
   const pollIntervalMs = 1_000;
@@ -413,9 +383,7 @@ async function handleWaitUntilPosted(request, env) {
   }
 }
 
-export { normalizeSlug, normalizePetitionUrl, parseSlugFromPetitionUrl, slugify };
-
-export { normalizeSlug, normalizePetitionUrl, parseSlugFromPetitionUrl, slugify };
+export { normalizePetitionUrl, parseSlugFromPetitionUrl, slugify };
 
 export default {
   async fetch(request, env) {
