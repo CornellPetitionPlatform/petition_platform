@@ -70,8 +70,11 @@ python scripts/sync_qualtrics_petitions.py --dry-run
 
 ## Triggering sync
 
-- The workflow runs when it receives a GitHub `repository_dispatch` event with type `qualtrics_sync`.
+- The workflow runs when it receives a GitHub `repository_dispatch` event (any `event_type` value is accepted).
+- It also runs on a scheduled hourly backfill (`:15` each hour) to catch responses that were not yet present during an earlier export.
 - You can still run it manually with `workflow_dispatch`.
+- Recommended `event_type`: `qualtrics_sync`.
+- Recommended payload for upserts: include `client_payload.response_id` so the sync can wait for that specific response to appear in export.
 
 ## Trigger from Qualtrics (API call)
 
@@ -90,6 +93,15 @@ Notes:
 - Use a GitHub token with permission to dispatch workflow events for this repository.
 - Keep this token in Qualtrics as a secret/private credential.
 - The workflow has concurrency enabled (`qualtrics-sync` group), so overlapping triggers collapse to one active run.
+- For best reliability, send `client_payload.response_id`:
+
+```bash
+curl -X POST "https://api.github.com/repos/<OWNER>/<REPO>/dispatches" \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer <GITHUB_TOKEN>" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  -d '{"event_type":"qualtrics_sync","client_payload":{"action":"upsert","response_id":"R_XXXXXXXX"}}'
+```
 
 ## Completion API (recommended when you need to show the URL immediately)
 
