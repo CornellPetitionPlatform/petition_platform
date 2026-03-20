@@ -144,9 +144,11 @@ def petition_slug_from_response_id(response_id: str, key: str) -> str:
 
 
 def choose_petition_path(response_id: str, key: str, current_path: Optional[Path] = None) -> Path:
-    if current_path is not None and current_path.exists():
-        return current_path
-    current_resolved = current_path.resolve() if current_path is not None else None
+    current_resolved = (
+        current_path.resolve()
+        if current_path is not None and current_path.exists()
+        else None
+    )
     base = petition_slug_from_response_id(response_id, key)
     candidate = PETITIONS_DIR / f"{base}.md"
     counter = 2
@@ -348,6 +350,56 @@ def rows_from_zip(zip_bytes: bytes, cfg: QualtricsConfig) -> List[PetitionRow]:
     return rows
 
 
+def fetch_export_rows(cfg: QualtricsConfig) -> List[PetitionRow]:
+    progress_id = start_export(cfg)
+    file_id = wait_for_export(cfg, progress_id)
+    zip_bytes = download_export_zip(cfg, file_id)
+    return rows_from_zip(zip_bytes, cfg)
+
+
+def classify_target_row(rows: List[PetitionRow], target_response_id: str) -> str:
+    matching_rows = [row for row in rows if row.response_id == target_response_id]
+    if not matching_rows:
+        return "missing"
+
+    if any(row.is_published and row.title and row.body for row in matching_rows):
+        return "ready"
+
+    if any(not row.is_published for row in matching_rows):
+        return "unpublished"
+
+    return "incomplete"
+
+
+def fetch_rows_for_sync(cfg: QualtricsConfig) -> List[PetitionRow]:
+    if cfg.target_response_id and not (cfg.target_title and cfg.target_body):
+        deadline = time.time() + cfg.poll_timeout_seconds
+        last_status = "missing"
+
+        while True:
+            rows = fetch_export_rows(cfg)
+            last_status = classify_target_row(rows, cfg.target_response_id)
+            if last_status == "ready":
+                return rows
+
+            if time.time() >= deadline:
+                if last_status == "missing":
+                    raise RuntimeError(
+                        "Target response ID was not yet available in the Qualtrics export before timeout"
+                    )
+                if last_status == "unpublished":
+                    raise RuntimeError(
+                        "Target response ID is present in Qualtrics but not marked published"
+                    )
+                raise RuntimeError(
+                    "Target response ID is present in Qualtrics but title/body content is blank"
+                )
+
+            time.sleep(cfg.poll_interval_seconds)
+
+    return fetch_export_rows(cfg)
+
+
 def render_markdown(
     title: str,
     body: str,
@@ -397,22 +449,25 @@ def sync_rows(rows: List[PetitionRow], cfg: QualtricsConfig, dry_run: bool) -> T
         current = existing_by_response.get(response_id)
         target = choose_petition_path(response_id, cfg.url_encryption_key, current)
         moved = current is not None and current.resolve() != target.resolve()
-        if moved and not dry_run:
-            current.rename(target)
-
         existing_path = current if current is not None else target
-        existing_posted_at = read_front_matter_value(existing_path, "posted_at") if existing_path.exists() else None
+        existing_posted_at = (
+            read_front_matter_value(existing_path, "posted_at")
+            if existing_path.exists()
+            else None
+        )
         posted_at = compute_posted_at(recorded_date, existing_posted_at)
         markdown = render_markdown(title, body, response_id, recorded_date, posted_at)
-        baseline = current if moved and dry_run and current is not None else target
-        already = baseline.read_text(encoding="utf-8") if baseline.exists() else None
+        already = existing_path.read_text(encoding="utf-8") if existing_path.exists() else None
         if already == markdown and not moved:
             skipped += 1
             existing_by_response[response_id] = target
             continue
 
-        if not dry_run and already != markdown:
-            target.write_text(markdown, encoding="utf-8")
+        if not dry_run:
+            if moved:
+                current.rename(target)
+            if already != markdown or moved:
+                target.write_text(markdown, encoding="utf-8")
 
         if current is not None:
             updated += 1
@@ -496,10 +551,7 @@ def main() -> int:
                 )
             ]
         else:
-            progress_id = start_export(cfg)
-            file_id = wait_for_export(cfg, progress_id)
-            zip_bytes = download_export_zip(cfg, file_id)
-            rows = rows_from_zip(zip_bytes, cfg)
+            rows = fetch_rows_for_sync(cfg)
         created, updated, skipped = sync_rows(rows, cfg, args.dry_run)
     except Exception as exc:  # pylint: disable=broad-except
         print(f"ERROR: {exc}", file=sys.stderr)
