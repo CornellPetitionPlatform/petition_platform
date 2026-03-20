@@ -24,6 +24,7 @@ layout: default
 
   <section class="share-panel" aria-label="Share this petition">
     <h2 class="share-panel__title">Share this petition</h2>
+    <span id="share-status" class="action-status share-status" aria-live="polite"></span>
     <div class="share-panel__content">
       <div class="share-panel__options">
         <button id="copy-link-btn" class="share-option" type="button">
@@ -32,6 +33,14 @@ layout: default
             <path d="M13.41 10.59a1 1 0 0 1 0 1.41l-2.41 2.41a3 3 0 0 1-4.24-4.24l2.12-2.12a3 3 0 0 1 4.24 0 1 1 0 0 1-1.41 1.41 1 1 0 0 0-1.41 0L8.18 11.6a1 1 0 1 0 1.41 1.41l2.41-2.41a1 1 0 0 1 1.41 0Z"></path>
           </svg>
           <span>Copy link</span>
+        </button>
+
+        <button id="copy-text-btn" class="share-option" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M7 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8.5a2 2 0 0 0 1.41-.59l3.5-3.5A2 2 0 0 0 21 15.5V5a2 2 0 0 0-2-2H7Zm0 2h12v10h-3a2 2 0 0 0-2 2v2H7V5Zm9 13.59V17h1.59L16 18.59Z"></path>
+            <path d="M9 9h8v2H9V9Zm0 4h6v2H9v-2Z"></path>
+          </svg>
+          <span>Copy petition text</span>
         </button>
 
         <a id="share-whatsapp" class="share-option" href="https://wa.me/?text={{ page_share_text | uri_escape }}" target="_blank" rel="noopener noreferrer">
@@ -78,6 +87,7 @@ layout: default
     const slug = "{{ page.slug | default: page.title | slugify }}";
     const title = {{ page.title | jsonify }};
     const copyBtn = document.getElementById("copy-link-btn");
+    const copyTextBtn = document.getElementById("copy-text-btn");
     const whatsappLink = document.getElementById("share-whatsapp");
     const facebookLink = document.getElementById("share-facebook");
     const nextdoorBtn = document.getElementById("share-nextdoor");
@@ -86,6 +96,7 @@ layout: default
     const likeBtn = document.getElementById("like-btn");
     const likeCount = document.getElementById("like-count");
     const status = document.getElementById("action-status");
+    const shareStatus = document.getElementById("share-status");
     const configuredLikesApiBase = {{ site.likes_api_url | default: "" | jsonify }};
     const isLocalHost = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
     const likesApiBase = configuredLikesApiBase || (isLocalHost ? "http://127.0.0.1:8787" : "");
@@ -111,6 +122,12 @@ layout: default
     function setLinkIfPresent(node, href) {
       if (!node) return;
       node.setAttribute("href", href);
+    }
+
+    function buildPetitionText() {
+      const proseNode = document.querySelector(".prose");
+      const bodyText = proseNode ? proseNode.innerText.trim() : "";
+      return bodyText ? title + "\n\n" + bodyText : title;
     }
 
     function initializeShareOptions() {
@@ -224,11 +241,24 @@ layout: default
       copyBtn.addEventListener("click", async function () {
         try {
           await navigator.clipboard.writeText(window.location.href);
-          if (status) status.textContent = "Link copied";
+          if (shareStatus) shareStatus.textContent = "Link copied";
           track("petition_copy_link");
         } catch (err) {
-          if (status) status.textContent = "Copy failed";
+          if (shareStatus) shareStatus.textContent = "Copy failed";
           track("petition_copy_link_failed");
+        }
+      });
+    }
+
+    if (copyTextBtn) {
+      copyTextBtn.addEventListener("click", async function () {
+        try {
+          await navigator.clipboard.writeText(buildPetitionText());
+          if (shareStatus) shareStatus.textContent = "Petition text copied";
+          track("petition_copy_text");
+        } catch (err) {
+          if (shareStatus) shareStatus.textContent = "Copy failed";
+          track("petition_copy_text_failed");
         }
       });
     }
@@ -237,10 +267,10 @@ layout: default
       nextdoorBtn.addEventListener("click", function () {
         window.open("https://nextdoor.com/", "_blank", "noopener");
         navigator.clipboard.writeText(window.location.href).then(function () {
-          if (status) status.textContent = "Link copied. Continue sharing on Nextdoor.";
+          if (shareStatus) shareStatus.textContent = "Link copied. Continue sharing on Nextdoor.";
           track("petition_share_nextdoor");
         }).catch(function () {
-          if (status) status.textContent = "Opened Nextdoor. Copy link manually if needed.";
+          if (shareStatus) shareStatus.textContent = "Opened Nextdoor. Copy link manually if needed.";
           track("petition_share_nextdoor_failed");
         });
       });
@@ -248,24 +278,28 @@ layout: default
 
     if (whatsappLink) {
       whatsappLink.addEventListener("click", function () {
+        if (shareStatus) shareStatus.textContent = "Opening WhatsApp to share this petition.";
         track("petition_share_whatsapp");
       });
     }
 
     if (facebookLink) {
       facebookLink.addEventListener("click", function () {
+        if (shareStatus) shareStatus.textContent = "Opening Facebook to share this petition.";
         track("petition_share_facebook");
       });
     }
 
     if (emailLink) {
       emailLink.addEventListener("click", function () {
+        if (shareStatus) shareStatus.textContent = "Opening email draft to share this petition.";
         track("petition_share_email");
       });
     }
 
     if (xLink) {
       xLink.addEventListener("click", function () {
+        if (shareStatus) shareStatus.textContent = "Opening X to share this petition.";
         track("petition_share_x");
       });
     }
