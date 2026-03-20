@@ -2,7 +2,7 @@
 layout: petition
 title: "Demand Transparency and Affordability in Healthcare Costs for All Americans"
 qualtrics_response_id: "R_7ImIWs7jf14cWxf"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-18 20:39:19"
 posted_at: "2026-03-18T20:35:13+00:00"
 source: qualtrics
 ---
