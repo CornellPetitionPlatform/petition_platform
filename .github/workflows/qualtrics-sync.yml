@@ -3,8 +3,8 @@ name: Sync petitions from Qualtrics
 on:
   workflow_dispatch:
   repository_dispatch:
-    types:
-      - qualtrics_sync
+  schedule:
+    - cron: "15 * * * *"
 
 concurrency:
   group: qualtrics-sync
@@ -18,6 +18,23 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
+      - name: Log trigger context
+        run: |
+          echo "event_name=${{ github.event_name }}"
+          echo "event_action=${{ github.event.action || '' }}"
+          echo "repository=${{ github.repository }}"
+          echo "ref=${{ github.ref }}"
+          echo "payload_action=${{ github.event.client_payload.action || '' }}"
+          echo "payload_response_id=${{ github.event.client_payload.response_id || '' }}"
+          echo "payload_delete_response_id=${{ github.event.client_payload.delete_response_id || '' }}"
+          echo "payload_delete_slug=${{ github.event.client_payload.delete_slug || '' }}"
+
+      - name: Warn when dispatch payload is missing response_id
+        if: github.event_name == 'repository_dispatch' && github.event.client_payload.action != 'delete' && github.event.client_payload.response_id == ''
+        run: |
+          echo "::warning::Dispatch payload did not include client_payload.response_id."
+          echo "::warning::This run will do a full snapshot sync and may create no PR if Qualtrics export has no diff yet."
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -75,7 +92,7 @@ jobs:
           git commit -m "$TITLE"
           git push --force origin "$BRANCH"
 
-          pr_number="$(gh pr view "$BRANCH" --repo "$REPO" --json number --jq '.number' 2>/dev/null || true)"
+          pr_number="$(gh pr list --repo "$REPO" --base "$BASE_BRANCH" --head "$BRANCH" --state open --json number --jq '.[0].number' 2>/dev/null || true)"
           if [ -z "$pr_number" ] || [ "$pr_number" = "null" ]; then
             gh pr create \
               --repo "$REPO" \
@@ -83,7 +100,7 @@ jobs:
               --head "$BRANCH" \
               --title "$TITLE" \
               --body "$BODY"
-            pr_number="$(gh pr view "$BRANCH" --repo "$REPO" --json number --jq '.number')"
+            pr_number="$(gh pr list --repo "$REPO" --base "$BASE_BRANCH" --head "$BRANCH" --state open --json number --jq '.[0].number')"
           else
             gh pr edit "$pr_number" \
               --repo "$REPO" \
@@ -96,7 +113,7 @@ jobs:
             exit 1
           fi
 
-          pr_url="$(gh pr view "$BRANCH" --repo "$REPO" --json url --jq '.url')"
+          pr_url="$(gh pr view "$pr_number" --repo "$REPO" --json url --jq '.url')"
           echo "Pull request URL: $pr_url"
           echo "pull-request-number=$pr_number" >> "$GITHUB_OUTPUT"
 
