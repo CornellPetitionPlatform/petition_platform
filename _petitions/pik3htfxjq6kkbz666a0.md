@@ -2,7 +2,7 @@
 layout: petition
 title: "End the Production of Processed Foods and Excess Sugar to Protect Our Children's Dental Health!"
 qualtrics_response_id: "R_1n6MTYQRW6r68VL"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-18 20:27:00"
 posted_at: "2026-03-18T20:24:29+00:00"
 source: qualtrics
 ---
