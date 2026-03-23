@@ -2,7 +2,7 @@
 layout: petition
 title: "Expand Subway Connections from Brooklyn to Queens Now!"
 qualtrics_response_id: "R_1Pc0tsbEQvC7iWU"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-23 16:38:22"
 posted_at: "2026-03-23T16:01:29+00:00"
 source: qualtrics
 ---
