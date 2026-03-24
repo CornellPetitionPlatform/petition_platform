@@ -2,7 +2,7 @@
 layout: petition
 title: "Demand Healthier Vending Machine Options for Our Community!"
 qualtrics_response_id: "R_7qDbEBB9GMBKv8S"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:40:51"
 posted_at: "2026-03-24T19:36:44+00:00"
 source: qualtrics
 ---

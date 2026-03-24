@@ -2,7 +2,7 @@
 layout: petition
 title: "Stand Up Against Hate: Support LGBTQ Rights and Acceptance for All!"
 qualtrics_response_id: "R_1rqtra5Ex8X6dAo"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 20:28:19"
 posted_at: "2026-03-24T20:24:48+00:00"
 source: qualtrics
 ---

@@ -2,7 +2,7 @@
 layout: petition
 title: "Demand Local Government Hire Additional Workforce for Safer Snow Removal on City Roads and Public Sidewalks!"
 qualtrics_response_id: "R_70T6BYmcbDBhMzQ"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:32:47"
 posted_at: "2026-03-24T19:30:22+00:00"
 source: qualtrics
 ---

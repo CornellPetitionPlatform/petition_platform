@@ -2,7 +2,7 @@
 layout: petition
 title: "Demand Hulu Revive Buffy: New Sunnydale or Let Other Networks Take the Lead!"
 qualtrics_response_id: "R_7F5FjfqLB4K9EKM"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 20:32:50"
 posted_at: "2026-03-24T20:27:08+00:00"
 source: qualtrics
 ---

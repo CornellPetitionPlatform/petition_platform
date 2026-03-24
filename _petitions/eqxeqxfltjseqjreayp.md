@@ -2,7 +2,7 @@
 layout: petition
 title: "Strengthen Consequences for Repeat Juvenile Offenders to Ensure Accountability and Rehabilitation"
 qualtrics_response_id: "R_63NGUAd8AM90kjn"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:38:00"
 posted_at: "2026-03-24T19:35:26+00:00"
 source: qualtrics
 ---

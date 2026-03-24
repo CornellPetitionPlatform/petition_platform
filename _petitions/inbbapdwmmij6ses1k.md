@@ -2,7 +2,7 @@
 layout: petition
 title: "Lower Rental Rates for Farmer’s Market Stands to Support Local Farmers and Communities!"
 qualtrics_response_id: "R_5jUrkGQCsXVRD2Q"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:26:12"
 posted_at: "2026-03-24T19:16:34+00:00"
 source: qualtrics
 ---

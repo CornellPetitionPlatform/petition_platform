@@ -2,7 +2,7 @@
 layout: petition
 title: "End Daylight Savings Time for Good: Restore Our Natural Rhythms!"
 qualtrics_response_id: "R_1LSinc90znINbqr"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 20:09:41"
 posted_at: "2026-03-24T19:59:11+00:00"
 source: qualtrics
 ---

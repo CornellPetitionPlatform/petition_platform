@@ -2,7 +2,7 @@
 layout: petition
 title: "Amplify BORIS: Bring Japanese Heavy Rock to Global Audiences Now!"
 qualtrics_response_id: "R_7V9jlShwznC75ia"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 20:25:55"
 posted_at: "2026-03-24T20:21:21+00:00"
 source: qualtrics
 ---
