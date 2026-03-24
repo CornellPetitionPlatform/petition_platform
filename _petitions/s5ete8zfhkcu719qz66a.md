@@ -2,7 +2,7 @@
 layout: petition
 title: "Expand Counseling Services and Wellness Programs to Support Student Mental Health and Academic Success"
 qualtrics_response_id: "R_5kY2gsq7Z5UkhIq"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 21:07:56"
 posted_at: "2026-03-24T20:50:44+00:00"
 source: qualtrics
 ---

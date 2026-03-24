@@ -2,7 +2,7 @@
 layout: petition
 title: "Expand Access to Donations and Free Food for Our Community in Need"
 qualtrics_response_id: "R_366JgfoPfvGjMTn"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 21:08:38"
 posted_at: "2026-03-24T21:00:48+00:00"
 source: qualtrics
 ---
