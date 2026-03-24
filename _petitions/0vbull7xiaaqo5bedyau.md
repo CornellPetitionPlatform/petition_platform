@@ -2,7 +2,7 @@
 layout: petition
 title: "Demand Justice: Impose the Death Penalty for Sex Offenders Who Assault Minors Under 16"
 qualtrics_response_id: "R_6P1ANIViqfy5Qbd"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 18:54:25"
 posted_at: "2026-03-24T18:48:42+00:00"
 source: qualtrics
 ---

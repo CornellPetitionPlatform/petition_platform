@@ -2,7 +2,7 @@
 layout: petition
 title: "End the Cycle of Gambling Addiction: Ban Casinos and Sports Betting Now!"
 qualtrics_response_id: "R_5KuKgzG2rFlpFCv"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:01:32"
 posted_at: "2026-03-24T18:55:56+00:00"
 source: qualtrics
 ---
