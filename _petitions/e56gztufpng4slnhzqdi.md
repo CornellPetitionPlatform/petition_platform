@@ -2,7 +2,7 @@
 layout: petition
 title: "Demand Stricter Laws to Eliminate Ghost Job Postings and Streamline Hiring Processes!"
 qualtrics_response_id: "R_6DgcTmGPDpl76Gl"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:42:48"
 posted_at: "2026-03-24T19:32:38+00:00"
 source: qualtrics
 ---

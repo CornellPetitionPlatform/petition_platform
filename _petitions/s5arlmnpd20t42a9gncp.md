@@ -2,7 +2,7 @@
 layout: petition
 title: "Demand Affordable Housing Solutions for Our Community Now!"
 qualtrics_response_id: "R_1M4zIIrc90mPpaK"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:23:04"
 posted_at: "2026-03-24T19:18:24+00:00"
 source: qualtrics
 ---

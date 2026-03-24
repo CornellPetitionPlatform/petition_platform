@@ -2,7 +2,7 @@
 layout: petition
 title: "Establish Deforestation Limits and Protect Natural Spaces in Every County!"
 qualtrics_response_id: "R_3FkAcqQsw3t5xxr"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:55:08"
 posted_at: "2026-03-24T19:50:54+00:00"
 source: qualtrics
 ---

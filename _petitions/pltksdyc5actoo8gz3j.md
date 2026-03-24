@@ -2,7 +2,7 @@
 layout: petition
 title: "Demand Free College for All Funded by Tech Giants!"
 qualtrics_response_id: "R_7QVyFpfhAMfC4OB"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:40:19"
 posted_at: "2026-03-24T19:36:08+00:00"
 source: qualtrics
 ---

@@ -2,7 +2,7 @@
 layout: petition
 title: "Protect Seniors by Exempting or Reducing Property Taxes to Preserve Homeownership"
 qualtrics_response_id: "R_7pSLC8qdPQKeYIt"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:59:27"
 posted_at: "2026-03-24T19:54:40+00:00"
 source: qualtrics
 ---

@@ -2,7 +2,7 @@
 layout: petition
 title: "Restore Free Parking at Our Local Park for Everyone to Enjoy"
 qualtrics_response_id: "R_3ahTe35KK5R2g0q"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:52:36"
 posted_at: "2026-03-24T19:49:05+00:00"
 source: qualtrics
 ---
