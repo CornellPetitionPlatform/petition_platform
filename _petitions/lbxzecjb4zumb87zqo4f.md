@@ -2,7 +2,7 @@
 layout: petition
 title: "Demand Safe and Spacious Sidewalks for Our Community!"
 qualtrics_response_id: "R_7TLD8kkARPUWYGE"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:13:12"
 posted_at: "2026-03-24T19:10:08+00:00"
 source: qualtrics
 ---

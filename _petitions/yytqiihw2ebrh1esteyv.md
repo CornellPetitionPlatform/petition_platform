@@ -2,7 +2,7 @@
 layout: petition
 title: "End the Presence of ICE Agents at Commercial Airports to Protect Passenger Rights!"
 qualtrics_response_id: "R_7o1krhUeE0bgDNy"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:15:02"
 posted_at: "2026-03-24T19:12:22+00:00"
 source: qualtrics
 ---

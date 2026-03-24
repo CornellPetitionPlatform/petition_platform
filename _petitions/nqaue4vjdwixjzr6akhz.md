@@ -2,7 +2,7 @@
 layout: petition
 title: "Expand Free Clinic Access for Uninsured Residents: Improve Healthcare Services in Our Community!"
 qualtrics_response_id: "R_5tBTfplIvflKAOB"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 19:05:17"
 posted_at: "2026-03-24T19:02:30+00:00"
 source: qualtrics
 ---
