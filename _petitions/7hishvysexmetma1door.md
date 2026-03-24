@@ -2,7 +2,7 @@
 layout: petition
 title: "Ensure Dental Care is Covered by Medical Insurance for All!"
 qualtrics_response_id: "R_338GQSdWiOxJf8b"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-24 21:54:31"
 posted_at: "2026-03-24T21:46:23+00:00"
 source: qualtrics
 ---
