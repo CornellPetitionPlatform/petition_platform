@@ -229,6 +229,12 @@ a.share-option:visited {
   color: #4b4b57;
 }
 
+.share-status {
+  display: block;
+  margin: -0.25rem 0 0.9rem;
+  color: #b91c1c;
+}
+
 .like-meta {
   margin: 0;
   font-size: 0.95rem;
