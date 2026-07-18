@@ -2,7 +2,7 @@
 layout: petition
 title: "Reduce the Frequency of F Trains for Improved Service Quality"
 qualtrics_response_id: "R_7GB7bqmaqF2wJDC"
-qualtrics_recorded_date: ""
+qualtrics_recorded_date: "2026-03-18 19:29:02"
 posted_at: "2026-03-18T19:26:40+00:00"
 source: qualtrics
 ---
