@@ -5,7 +5,7 @@ layout: default
 
 <section class="hero">
   <h1>Petition Platform</h1>
-  <p>A repository of anonymously written petitions, as contributed by participants in an STech Lab Study. </p>
+  <p>A repository of anonymously written petitions, as contributed by participants in an STech Lab Study. The STech Lab is not responsible for the petitions written and posted by participants. If you have concerns and believe a petition should be taken down, please contact Isabel Corpus at isc36@cornell.edu to request removal.</p>
   <a class="cta" href="/about/">Learn more</a>
 </section>
 
